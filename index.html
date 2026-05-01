@@ -304,7 +304,7 @@ select option{background:#111318;}
   <!-- ── LIST TAB ── -->
   <div class="tab-page active" id="tab-list">
     <div class="main-layout">
-      <div class="trade-list-panel">
+      <div class="trade-list-panel" onclick="handlePanelClick(event,'live')">
         <div class="panel-header">
           <div class="panel-title">Live / Funded Trades</div>
           <button class="btn-add" onclick="showNewTradeForm('live')">＋ New Trade</button>
@@ -358,7 +358,7 @@ select option{background:#111318;}
   <!-- ── EVAL JOURNAL TAB ── -->
   <div class="tab-page" id="tab-evaljournal">
     <div class="main-layout">
-      <div class="trade-list-panel">
+      <div class="trade-list-panel" onclick="handlePanelClick(event,'eval')">
         <div class="panel-header">
           <div class="panel-title" style="color:var(--payout);">🎯 Evaluation Trades</div>
           <button class="btn-add" style="background:var(--payout);" onclick="showNewTradeForm('eval')">＋ New Eval Trade</button>
@@ -892,7 +892,7 @@ function showForm(trade,mode){
   document.getElementById(panelId).innerHTML=`
     <div class="form-title">
       ${trade?(isEval?'✏ Edit Eval Trade':'✏ Edit Trade'):(isEval?'🎯 New Eval Trade':'＋ New Trade')}
-      ${trade?`<button class="icon-btn" onclick="showDetail('${trade.id}','${mode}')" style="font-size:10px;padding:3px 7px;">✕</button>`:''}
+      <button class="icon-btn" onclick="cancelForm('${mode}')" style="font-size:10px;padding:3px 7px;" title="Cancel">✕</button>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -959,7 +959,10 @@ function showForm(trade,mode){
       <textarea id="${isEval?'ef':'f'}-notes" placeholder="Entry reason, setup, lessons…">${esc(t.notes||'')}</textarea>
     </div>
     <button class="btn-save" style="background:${accentColor};" onclick="saveTrade('${mode}')">💾 Save ${isEval?'Eval ':' '}Trade</button>
-    ${trade?`<button class="btn-delete" onclick="deleteTrade('${trade.id}','${mode}')">🗑 Delete</button>`:''}
+    ${trade
+      ? `<button class="btn-delete" onclick="deleteTrade('${trade.id}','${mode}')">🗑 Delete</button>`
+      : `<button class="btn-delete" style="color:var(--text2);border-color:var(--border2);margin-top:7px;" onclick="cancelForm('${mode}')">Cancel</button>`
+    }
   `;
   updateCopiesPreview(mode);
 }
@@ -1089,6 +1092,48 @@ async function saveSettings(){
 function logout(){
   if(!confirm('Log out? Data stays on GitHub.'))return;
   ['tj_token','tj_repo'].forEach(k=>localStorage.removeItem(k));location.reload();
+}
+
+// ── CANCEL / DESELECT ────────────────────────────────────
+function cancelForm(mode){
+  const isEval=mode==='eval';
+  // If we were editing an existing trade, go back to its detail view
+  const eid=isEval?editingEvalId:editingId;
+  if(eid){
+    if(isEval)editingEvalId=null; else editingId=null;
+    showDetail(eid,mode);
+    return;
+  }
+  // New trade cancel — clear selection and show empty state
+  if(isEval){editingEvalId=null;selectedEvalTradeId=null;}
+  else{editingId=null;selectedTradeId=null;}
+  clearPanel(mode);
+  renderTrades(mode);
+}
+
+function clearPanel(mode){
+  const isEval=mode==='eval';
+  const panelId=isEval?'eval-right-panel':'right-panel';
+  const icon=isEval?'🎯':'📈';
+  const msg=isEval?'Select an eval trade':'Select a trade to view';
+  const sub=isEval?'Or click <strong>New Eval Trade</strong> to log your evaluation entry.':'Or click <strong>New Trade</strong> to log your latest entry.';
+  document.getElementById(panelId).innerHTML=`<div class="empty-state"><div class="icon">${icon}</div><h3>${msg}</h3><p>${sub}</p></div>`;
+}
+
+function handlePanelClick(e,mode){
+  // Only deselect when clicking directly on the panel background (not on a card or button)
+  const tag=e.target.tagName.toLowerCase();
+  if(['button','select','option','input','textarea','a'].includes(tag))return;
+  if(e.target.closest('.trade-card,.filters,.panel-header,.filter-btn,.filter-select,.btn-add'))return;
+  // Only act if a trade is currently selected (not in new/edit form)
+  const isEval=mode==='eval';
+  const selected=isEval?selectedEvalTradeId:selectedTradeId;
+  const editing=isEval?editingEvalId:editingId;
+  if(!selected&&!editing)return;
+  if(isEval){selectedEvalTradeId=null;editingEvalId=null;}
+  else{selectedTradeId=null;editingId=null;}
+  clearPanel(mode);
+  renderTrades(mode);
 }
 
 // ── HELPERS ───────────────────────────────────────────────
