@@ -297,6 +297,7 @@ select option{background:#111318;}
     <button class="tab-btn active" id="tab-btn-list" onclick="switchTab('list')">📋 Trade Log</button>
     <button class="tab-btn" id="tab-btn-calendar" onclick="switchTab('calendar')">📅 Calendar</button>
     <button class="tab-btn" id="tab-btn-evaljournal" onclick="switchTab('evaljournal')">🎯 Eval Journal</button>
+    <button class="tab-btn" id="tab-btn-evalcalendar" onclick="switchTab('evalcalendar')">🗓 Eval Calendar</button>
     <button class="tab-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
   </div>
 
@@ -336,6 +337,21 @@ select option{background:#111318;}
         <button class="btn-add" onclick="switchTab('list');showNewTradeForm('live')">＋ New Trade</button>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── EVAL CALENDAR TAB ── -->
+  <div class="tab-page" id="tab-evalcalendar">
+    <div class="calendar-page">
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calNav(-1,'eval')">‹</button>
+          <div class="cal-month" id="eval-cal-month-label"></div>
+          <button class="cal-nav-btn" onclick="calNav(1,'eval')">›</button>
+        </div>
+        <button class="btn-add" style="background:var(--payout);" onclick="switchTab('evaljournal');showNewTradeForm('eval')">＋ New Eval Trade</button>
+      </div>
+      <div class="cal-grid" id="eval-cal-grid"></div>
     </div>
   </div>
 
@@ -384,7 +400,7 @@ select option{background:#111318;}
       <div class="section-title">💳 Evaluation Purchases <span></span></div>
       <div class="exp-table-wrap">
         <table class="exp-table">
-          <thead><tr><th>Date</th><th>Prop Firm</th><th>Accounts</th><th>Amount</th><th>Notes</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Prop Firm</th><th>Size</th><th>Accounts</th><th>Amount</th><th>Notes</th><th></th></tr></thead>
           <tbody id="exp-tbody"></tbody>
         </table>
         <div class="exp-empty" id="exp-empty">No expenses yet.</div>
@@ -436,6 +452,16 @@ select option{background:#111318;}
     <div id="fin-qty-row" style="margin-bottom:13px;">
       <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Number of Accounts</label>
       <input type="number" id="fin-qty" min="1" value="1" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+    </div>
+    <div id="fin-size-row" style="margin-bottom:13px;">
+      <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Account Size</label>
+      <select id="fin-size" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s;">
+        <option value="">— Select Size —</option>
+        <option value="25k">25K</option>
+        <option value="50k">50K</option>
+        <option value="100k">100K</option>
+        <option value="150k">150K</option>
+      </select>
     </div>
     <div class="field">
       <label>Amount ($)</label>
@@ -594,6 +620,7 @@ function switchTab(name){
   document.getElementById('tab-'+name).classList.add('active');
   document.getElementById('tab-btn-'+name).classList.add('active');
   if(name==='calendar')renderCalendar('live');
+  if(name==='evalcalendar')renderCalendar('eval');
   if(name==='evaljournal'){renderEvalAccountFilters();renderTrades('eval');}
   if(name==='expenses')renderFinances();
 }
@@ -678,13 +705,17 @@ function renderTrades(mode){
 // ── CALENDAR ──────────────────────────────────────────────
 function calNav(dir,mode){
   if(mode==='live'){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar('live');}
+  else{evalCalMonth+=dir;if(evalCalMonth>11){evalCalMonth=0;evalCalYear++;}if(evalCalMonth<0){evalCalMonth=11;evalCalYear--;}renderCalendar('eval');}
 }
 function renderCalendar(mode){
-  const src=mode==='eval'?evalTrades:trades;
+  const isEval=mode==='eval';
+  const src=isEval?evalTrades:trades;
   const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const yr=calYear,mo=calMonth;
-  document.getElementById('cal-month-label').textContent=`${MONTHS[mo]} ${yr}`;
+  const yr=isEval?evalCalYear:calYear, mo=isEval?evalCalMonth:calMonth;
+  const labelId=isEval?'eval-cal-month-label':'cal-month-label';
+  const gridId=isEval?'eval-cal-grid':'cal-grid';
+  document.getElementById(labelId).textContent=`${MONTHS[mo]} ${yr}`;
   const firstDay=new Date(yr,mo,1).getDay();
   const daysInMonth=new Date(yr,mo+1,0).getDate();
   const daysInPrev=new Date(yr,mo,0).getDate();
@@ -704,7 +735,7 @@ function renderCalendar(mode){
   }
   const rem=(firstDay+daysInMonth)%7===0?0:7-(firstDay+daysInMonth)%7;
   for(let d=1;d<=rem;d++)html+=`<div class="cal-cell other-month"><div class="cal-day-num">${d}</div></div>`;
-  document.getElementById('cal-grid').innerHTML=html;
+  document.getElementById(gridId).innerHTML=html;
 }
 
 function openCalPopup(dateStr,mode){
@@ -767,6 +798,7 @@ function renderFinances(){
     expTbody.innerHTML=expenses.map(e=>`<tr>
       <td style="font-family:var(--mono);font-size:11px;">${fmtDate(e.date)}</td>
       <td><span class="exp-firm-tag">${esc(e.firm)}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;text-align:center;">${e.accountSize?e.accountSize.toUpperCase():'—'}</td>
       <td style="font-family:var(--mono);text-align:center;">${e.qty||1}</td>
       <td><span class="exp-amount">-${fmtMoney(e.amount)}</span></td>
       <td style="color:var(--text2);font-size:11px;">${esc(e.notes||'—')}</td>
@@ -793,7 +825,9 @@ function setFinType(type){
   currentFinType=type;
   document.getElementById('fin-type-expense').classList.toggle('active',type==='expense');
   document.getElementById('fin-type-payout').classList.toggle('active',type==='payout');
-  document.getElementById('fin-qty-row').style.display=type==='expense'?'block':'none';
+  const isExp=type==='expense';
+  document.getElementById('fin-qty-row').style.display=isExp?'block':'none';
+  document.getElementById('fin-size-row').style.display=isExp?'block':'none';
 }
 function handleFinFirmChange(){
   const v=document.getElementById('fin-firm').value;
@@ -808,6 +842,7 @@ function openFinanceForm(){
   document.getElementById('fin-firm-custom').style.display='none';
   document.getElementById('fin-firm-custom').value='';
   document.getElementById('fin-qty').value=1;
+  document.getElementById('fin-size').value='';
   document.getElementById('fin-amount').value='';
   document.getElementById('fin-notes').value='';
   document.getElementById('finance-modal').classList.add('open');
@@ -818,10 +853,11 @@ async function saveFinance(){
   const firmSel=document.getElementById('fin-firm').value;
   const firm=firmSel==='__custom__'?document.getElementById('fin-firm-custom').value.trim():firmSel;
   const qty=parseInt(document.getElementById('fin-qty').value)||1;
+  const accountSize=document.getElementById('fin-size').value||'';
   const amount=parseFloat(document.getElementById('fin-amount').value)||0;
   const notes=document.getElementById('fin-notes').value.trim();
   if(!date||!firm||!amount){showToast('Date, firm and amount are required','error');return;}
-  const entry={id:editingFinId||uid(),type:currentFinType,date,firm,qty:currentFinType==='expense'?qty:1,amount,notes,createdAt:new Date().toISOString()};
+  const entry={id:editingFinId||uid(),type:currentFinType,date,firm,qty:currentFinType==='expense'?qty:1,accountSize:currentFinType==='expense'?accountSize:'',amount,notes,createdAt:new Date().toISOString()};
   if(editingFinId){const idx=finances.findIndex(f=>f.id===editingFinId);if(idx!==-1)finances[idx]=entry;}
   else finances.unshift(entry);
   closeFinanceForm();
