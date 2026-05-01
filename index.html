@@ -977,11 +977,16 @@ function setResult(btn,mode){
   const panel=mode==='eval'?'eval-right-panel':'right-panel';
   document.getElementById(panel).querySelectorAll('.result-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  updateCopiesPreview(mode);
 }
 function updateCopiesPreview(mode){
   const p=mode==='eval'?'ef':'f';
-  const pnl=parseFloat(document.getElementById(`${p}-pnl`)?.value)||0;
+  const panel=document.getElementById(mode==='eval'?'eval-right-panel':'right-panel');
+  let pnl=parseFloat(document.getElementById(`${p}-pnl`)?.value)||0;
   const copies=parseInt(document.getElementById(`${p}-copies`)?.value)||1;
+  const isLoss=panel?.querySelector('.result-btn.L.active')!==null;
+  if(isLoss && pnl>0) pnl=-pnl;
+  if(!isLoss && pnl<0) pnl=-pnl;
   const prev=document.getElementById(`${p}-copies-preview`);
   if(prev)prev.textContent=fmtPnl(pnl*copies);
 }
@@ -1000,9 +1005,13 @@ async function saveTrade(mode){
   const chartLink=document.getElementById(`${p}-chart-link`).value.trim();
   const notes=document.getElementById(`${p}-notes`).value.trim();
   if(!date||!asset){showToast('Date and Asset are required','error');return;}
-  const basePnl=parseFloat(pnl)||0,totalPnl=basePnl*copies;
+  // Ensure PnL sign matches result: L → always negative, W → always positive
+  let basePnl=parseFloat(pnl)||0;
+  if(result==='L' && basePnl>0) basePnl=-basePnl;
+  if(result==='W' && basePnl<0) basePnl=-basePnl;
+  const totalPnl=basePnl*copies;
   const eId=isEval?editingEvalId:editingId;
-  const trade={id:eId||uid(),date,asset,result,pnl:pnl||'0',copies,totalPnl,rr:rr||'',account,chartLink,notes,updatedAt:new Date().toISOString()};
+  const trade={id:eId||uid(),date,asset,result,pnl:String(basePnl),copies,totalPnl,rr:rr||'',account,chartLink,notes,updatedAt:new Date().toISOString()};
   if(isEval){
     if(editingEvalId){const idx=evalTrades.findIndex(t=>t.id===editingEvalId);if(idx!==-1)evalTrades[idx]=trade;}
     else evalTrades.unshift(trade);
