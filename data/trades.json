@@ -1,21 +1,6 @@
 {
   "trades": [],
-  "evalTrades": [
-    {
-      "id": "momset0hc148b",
-      "date": "2026-04-30",
-      "asset": "ES",
-      "result": "W",
-      "pnl": "529",
-      "copies": 1,
-      "totalPnl": 529,
-      "rr": "1.7",
-      "account": "LUCID TRADING",
-      "chartLink": "",
-      "notes": "2stage CIC. 10 am OLHC. perfect entry. should have hold to the all time highs. I closed early",
-      "updatedAt": "2026-05-01T10:46:02.081Z"
-    }
-  ],
+  "evalTrades": [],
   "finances": [],
   "accounts": []
 }
