@@ -283,14 +283,12 @@ select option{background:#111318;}
   </header>
 
   <div class="stats-bar">
-    <div class="stat-item"><div class="stat-label">Trades</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-item"><div class="stat-label">Total Trades</div><div class="stat-value" id="stat-total">0</div></div>
     <div class="stat-item"><div class="stat-label">Win Rate</div><div class="stat-value" id="stat-wr">—</div></div>
-    <div class="stat-item"><div class="stat-label">Net PnL</div><div class="stat-value" id="stat-pnl">$0</div></div>
     <div class="stat-item"><div class="stat-label">Avg RR</div><div class="stat-value" id="stat-rr">—</div></div>
-    <div class="stat-item"><div class="stat-label">Eval Trades</div><div class="stat-value" id="stat-eval-trades">0</div></div>
-    <div class="stat-item"><div class="stat-label">Eval Spent</div><div class="stat-value negative" id="stat-eval-spent">$0</div></div>
-    <div class="stat-item"><div class="stat-label">Payouts</div><div class="stat-value payout" id="stat-payouts">$0</div></div>
-    <div class="stat-item"><div class="stat-label">Net P&amp;L</div><div class="stat-value" id="stat-net">$0</div></div>
+    <div class="stat-item"><div class="stat-label">Best Trade</div><div class="stat-value positive" id="stat-best">—</div></div>
+    <div class="stat-item"><div class="stat-label">Worst Trade</div><div class="stat-value" id="stat-worst">—</div></div>
+    <div class="stat-item"><div class="stat-label">Net PnL</div><div class="stat-value" id="stat-pnl">$0</div></div>
   </div>
 
   <div class="tab-nav">
@@ -634,23 +632,27 @@ function renderStats(){
   const pnl=trades.reduce((s,t)=>s+(parseFloat(t.pnl)*(parseInt(t.copies)||1)||0),0);
   const rrs=trades.map(t=>parseFloat(t.rr)).filter(Boolean);
   const avgRR=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2):'—';
-  const expenses=finances.filter(f=>f.type==='expense');
-  const payouts=finances.filter(f=>f.type==='payout');
-  const totalSpent=expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  const totalPayout=payouts.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
-  const netPL=totalPayout-totalSpent;
+  const pnls=trades.map(t=>parseFloat(t.pnl)*(parseInt(t.copies)||1)||0);
+  const best=pnls.length?Math.max(...pnls):null;
+  const worst=pnls.length?Math.min(...pnls):null;
+
   document.getElementById('stat-total').textContent=total;
+
   document.getElementById('stat-wr').textContent=total?wr+'%':'—';
   document.getElementById('stat-wr').className='stat-value '+(wr>=50?'positive':'negative');
+
+  document.getElementById('stat-rr').textContent=avgRR==='—'?'—':avgRR+'R';
+
+  const bestEl=document.getElementById('stat-best');
+  bestEl.textContent=best!==null?fmtPnl(best):'—';
+  bestEl.className='stat-value '+(best===null?'':(best>=0?'positive':'negative'));
+
+  const worstEl=document.getElementById('stat-worst');
+  worstEl.textContent=worst!==null?fmtPnl(worst):'—';
+  worstEl.className='stat-value '+(worst===null?'':(worst>=0?'positive':'negative'));
+
   document.getElementById('stat-pnl').textContent=total?fmtPnl(pnl):'$0';
   document.getElementById('stat-pnl').className='stat-value '+(pnl>=0?'positive':'negative');
-  document.getElementById('stat-rr').textContent=avgRR==='—'?'—':avgRR+'R';
-  document.getElementById('stat-eval-trades').textContent=evalTrades.length;
-  document.getElementById('stat-eval-spent').textContent=totalSpent?'-'+fmtMoney(totalSpent):'$0';
-  document.getElementById('stat-payouts').textContent=totalPayout?'+'+fmtMoney(totalPayout):'$0';
-  const netEl=document.getElementById('stat-net');
-  netEl.textContent=fmtPnl(netPL);
-  netEl.className='stat-value '+(netPL>=0?'positive':'negative');
 }
 
 function renderAccountFilters(){
