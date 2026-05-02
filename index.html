@@ -55,13 +55,75 @@
   --win:#86efac;--loss:#fca5a5;
   --text:#f4f4f5;--text2:#71717a;--text3:#3f3f46;
 }
+/* ── THEME: SLATE ── */
+[data-theme="slate"]{
+  --bg:#0a0e14;--surface:#121820;--surface2:#18202c;
+  --border:#1f2a38;--border2:#263344;
+  --accent:#22d3ee;--accent2:#67e8f9;
+  --payout:#a5b4fc;
+  --result-win:#4ade80;--result-loss:#f87171;--result-be:#fb923c;
+  --win:#4ade80;--loss:#f87171;
+  --text:#e0eaf5;--text2:#6b8099;--text3:#3a4d60;
+}
+/* ── THEME: ROSE ── */
+[data-theme="rose"]{
+  --bg:#0f080a;--surface:#1c1014;--surface2:#24161b;
+  --border:#321e24;--border2:#42272f;
+  --accent:#fb7185;--accent2:#f43f5e;
+  --payout:#c084fc;
+  --result-win:#4ade80;--result-loss:#f87171;--result-be:#fbbf24;
+  --win:#4ade80;--loss:#f87171;
+  --text:#fde8ec;--text2:#a06070;--text3:#5c3840;
+}
+/* ── THEME: FOREST ── */
+[data-theme="forest"]{
+  --bg:#060e08;--surface:#0d1a10;--surface2:#122216;
+  --border:#1a3020;--border2:#22402a;
+  --accent:#86efac;--accent2:#4ade80;
+  --payout:#a78bfa;
+  --result-win:#4ade80;--result-loss:#f87171;--result-be:#fbbf24;
+  --win:#4ade80;--loss:#f87171;
+  --text:#e0f2e9;--text2:#5a9068;--text3:#2d5236;
+}
+/* ── THEME: OCEAN ── */
+[data-theme="ocean"]{
+  --bg:#040e12;--surface:#081820;--surface2:#0d2030;
+  --border:#102838;--border2:#163548;
+  --accent:#2dd4bf;--accent2:#06b6d4;
+  --payout:#a78bfa;
+  --result-win:#4ade80;--result-loss:#f87171;--result-be:#fbbf24;
+  --win:#4ade80;--loss:#f87171;
+  --text:#d8f5f2;--text2:#4a8a90;--text3:#235560;
+}
+/* ── THEME: LIGHT ── */
+[data-theme="light"]{
+  --bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --accent:#2563eb;--accent2:#0ea5e9;
+  --payout:#7c3aed;
+  --result-win:#16a34a;--result-loss:#dc2626;--result-be:#ea580c;
+  --win:#16a34a;--loss:#dc2626;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+}
+/* Light theme overrides for elements that use rgba dark overlays */
+[data-theme="light"] body::before{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);}
+[data-theme="light"] select option{background:#ffffff;}
+[data-theme="light"] .theme-option{color:var(--text2);}
+[data-theme="light"] .theme-option:hover{background:var(--border);color:var(--text);}
+[data-theme="light"] .theme-option.active{background:var(--border2);color:var(--text);}
+[data-theme="light"] .theme-option .swatch{border-color:rgba(0,0,0,.15);}
+[data-theme="light"] .setup-card{box-shadow:0 0 60px rgba(37,99,235,.08);}
+[data-theme="light"] .theme-dropdown{box-shadow:0 8px 32px rgba(0,0,0,.15);}
+[data-theme="light"] .toast{box-shadow:0 4px 12px rgba(0,0,0,.1);}
+[data-theme="light"] .cal-popup{box-shadow:0 8px 32px rgba(0,0,0,.15);}
+[data-theme="light"] .modal{box-shadow:0 8px 32px rgba(0,0,0,.15);}
 
 /* Theme picker */
 .theme-picker{position:relative;display:inline-block;}
 .theme-picker-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .2s;display:flex;align-items:center;gap:6px;font-family:var(--sans);}
 .theme-picker-btn:hover{border-color:var(--text3);color:var(--text);}
 .theme-picker-btn .swatch{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;}
-.theme-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:160px;z-index:300;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.theme-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:160px;max-height:320px;overflow-y:auto;z-index:300;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
 .theme-dropdown.open{display:block;}
 .theme-option{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background .15s;font-size:12px;color:var(--text2);font-family:var(--sans);}
 .theme-option:hover{background:var(--border2);color:var(--text);}
@@ -72,6 +134,11 @@
 .theme-option .swatch.ember{background:#f59e0b;}
 .theme-option .swatch.aurora{background:#e879f9;}
 .theme-option .swatch.zinc{background:#e4e4e7;}
+.theme-option .swatch.slate{background:#22d3ee;}
+.theme-option .swatch.rose{background:#fb7185;}
+.theme-option .swatch.forest{background:#86efac;}
+.theme-option .swatch.ocean{background:#2dd4bf;}
+.theme-option .swatch.light{background:#2563eb;border-color:rgba(0,0,0,.2)!important;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999;}
@@ -371,6 +438,11 @@ select option{background:#111318;}
           <div class="theme-option" data-theme="ember" onclick="applyTheme('ember')"><span class="swatch ember"></span>Ember</div>
           <div class="theme-option" data-theme="aurora" onclick="applyTheme('aurora')"><span class="swatch aurora"></span>Aurora</div>
           <div class="theme-option" data-theme="zinc" onclick="applyTheme('zinc')"><span class="swatch zinc"></span>Zinc</div>
+          <div class="theme-option" data-theme="slate" onclick="applyTheme('slate')"><span class="swatch slate"></span>Slate</div>
+          <div class="theme-option" data-theme="rose" onclick="applyTheme('rose')"><span class="swatch rose"></span>Rose</div>
+          <div class="theme-option" data-theme="forest" onclick="applyTheme('forest')"><span class="swatch forest"></span>Forest</div>
+          <div class="theme-option" data-theme="ocean" onclick="applyTheme('ocean')"><span class="swatch ocean"></span>Ocean</div>
+          <div class="theme-option" data-theme="light" onclick="applyTheme('light')"><span class="swatch light"></span>Light</div>
         </div>
       </div>
       <button class="icon-btn" onclick="openSettings()">⚙</button>
@@ -1763,11 +1835,16 @@ function handlePanelClick(e,mode){
 
 // ── THEMES ────────────────────────────────────────────────
 const THEMES={
-  void:  {label:'Void',   accentColor:'#00e5a0'},
+  void:    {label:'Void',    accentColor:'#00e5a0'},
   midnight:{label:'Midnight',accentColor:'#38bdf8'},
-  ember: {label:'Ember',  accentColor:'#f59e0b'},
-  aurora:{label:'Aurora', accentColor:'#e879f9'},
-  zinc:  {label:'Zinc',   accentColor:'#e4e4e7'},
+  ember:   {label:'Ember',   accentColor:'#f59e0b'},
+  aurora:  {label:'Aurora',  accentColor:'#e879f9'},
+  zinc:    {label:'Zinc',    accentColor:'#e4e4e7'},
+  slate:   {label:'Slate',   accentColor:'#22d3ee'},
+  rose:    {label:'Rose',    accentColor:'#fb7185'},
+  forest:  {label:'Forest',  accentColor:'#86efac'},
+  ocean:   {label:'Ocean',   accentColor:'#2dd4bf'},
+  light:   {label:'Light',   accentColor:'#2563eb'},
 };
 
 function applyTheme(name){
