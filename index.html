@@ -14,6 +14,51 @@
   --text:#e2e8f0;--text2:#8899aa;--text3:#4a5568;
   --mono:'Share Tech Mono',monospace;--sans:'DM Sans',sans-serif;
 }
+/* ── THEME: MIDNIGHT ── */
+[data-theme="midnight"]{
+  --bg:#060b14;--surface:#0c1525;--surface2:#111e33;
+  --border:#162035;--border2:#1e2e4a;
+  --accent:#38bdf8;--accent2:#818cf8;
+  --win:#38bdf8;--text:#dde8f5;--text2:#6b8aad;--text3:#344a66;
+}
+/* ── THEME: EMBER ── */
+[data-theme="ember"]{
+  --bg:#0f0b08;--surface:#1a1410;--surface2:#221c16;
+  --border:#2e241c;--border2:#3d3028;
+  --accent:#f59e0b;--accent2:#fb923c;
+  --win:#f59e0b;--text:#f0e6d8;--text2:#9c7e62;--text3:#5a4535;
+}
+/* ── THEME: AURORA ── */
+[data-theme="aurora"]{
+  --bg:#080610;--surface:#110f1e;--surface2:#18162a;
+  --border:#221f35;--border2:#2d2945;
+  --accent:#e879f9;--accent2:#a78bfa;
+  --win:#e879f9;--text:#ede9f8;--text2:#7c6fa0;--text3:#433b64;
+}
+/* ── THEME: ZINC ── */
+[data-theme="zinc"]{
+  --bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;
+  --border:#272727;--border2:#333333;
+  --accent:#e4e4e7;--accent2:#a1a1aa;
+  --win:#e4e4e7;--text:#f4f4f5;--text2:#71717a;--text3:#3f3f46;
+}
+
+/* Theme picker */
+.theme-picker{position:relative;display:inline-block;}
+.theme-picker-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .2s;display:flex;align-items:center;gap:6px;font-family:var(--sans);}
+.theme-picker-btn:hover{border-color:var(--text3);color:var(--text);}
+.theme-picker-btn .swatch{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.theme-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:160px;z-index:300;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.theme-dropdown.open{display:block;}
+.theme-option{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background .15s;font-size:12px;color:var(--text2);font-family:var(--sans);}
+.theme-option:hover{background:var(--border2);color:var(--text);}
+.theme-option.active{color:var(--text);background:var(--border);}
+.theme-option .swatch{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.15);}
+.theme-option .swatch.void{background:#00e5a0;}
+.theme-option .swatch.midnight{background:#38bdf8;}
+.theme-option .swatch.ember{background:#f59e0b;}
+.theme-option .swatch.aurora{background:#e879f9;}
+.theme-option .swatch.zinc{background:#e4e4e7;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999;}
@@ -301,6 +346,20 @@ select option{background:#111318;}
     </div>
     <div class="header-right">
       <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">idle</span></div>
+      <div class="theme-picker" id="theme-picker">
+        <button class="theme-picker-btn" onclick="toggleThemeDropdown()" title="Change theme">
+          <span class="swatch"></span>
+          <span id="theme-label">Void</span>
+          <span style="font-size:10px;opacity:.5;">▾</span>
+        </button>
+        <div class="theme-dropdown" id="theme-dropdown">
+          <div class="theme-option active" data-theme="void" onclick="applyTheme('void')"><span class="swatch void"></span>Void</div>
+          <div class="theme-option" data-theme="midnight" onclick="applyTheme('midnight')"><span class="swatch midnight"></span>Midnight</div>
+          <div class="theme-option" data-theme="ember" onclick="applyTheme('ember')"><span class="swatch ember"></span>Ember</div>
+          <div class="theme-option" data-theme="aurora" onclick="applyTheme('aurora')"><span class="swatch aurora"></span>Aurora</div>
+          <div class="theme-option" data-theme="zinc" onclick="applyTheme('zinc')"><span class="swatch zinc"></span>Zinc</div>
+        </div>
+      </div>
       <button class="icon-btn" onclick="openSettings()">⚙</button>
       <button class="icon-btn" onclick="logout()">⏻</button>
     </div>
@@ -596,6 +655,7 @@ async function initApp(){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
+  initTheme();
   if(location.protocol==='file:')document.getElementById('file-protocol-banner').style.display='block';
   const t=localStorage.getItem('tj_token'),r=localStorage.getItem('tj_repo');
   if(t&&r){document.getElementById('setup-token').value=t;document.getElementById('setup-repo').value=r;initApp();}
@@ -1639,6 +1699,53 @@ function handlePanelClick(e,mode){
   else{selectedTradeId=null;editingId=null;}
   clearPanel(mode);
   renderTrades(mode);
+}
+
+// ── THEMES ────────────────────────────────────────────────
+const THEMES={
+  void:  {label:'Void',   accentColor:'#00e5a0'},
+  midnight:{label:'Midnight',accentColor:'#38bdf8'},
+  ember: {label:'Ember',  accentColor:'#f59e0b'},
+  aurora:{label:'Aurora', accentColor:'#e879f9'},
+  zinc:  {label:'Zinc',   accentColor:'#e4e4e7'},
+};
+
+function applyTheme(name){
+  const root=document.documentElement;
+  // Remove old theme
+  Object.keys(THEMES).forEach(t=>root.removeAttribute('data-theme'));
+  if(name!=='void') root.setAttribute('data-theme',name);
+  // Update button swatch dynamically
+  document.querySelector('.theme-picker-btn .swatch').style.background=THEMES[name].accentColor;
+  document.getElementById('theme-label').textContent=THEMES[name].label;
+  // Update active state in dropdown
+  document.querySelectorAll('.theme-option').forEach(el=>{
+    el.classList.toggle('active',el.dataset.theme===name);
+  });
+  // Persist
+  localStorage.setItem('tj_theme',name);
+  // Close dropdown
+  document.getElementById('theme-dropdown').classList.remove('open');
+  // Re-render expectancy chart if visible (uses canvas colors)
+  if(document.getElementById('tab-expectancy')?.classList.contains('active')){
+    renderExpectancyChart();
+  }
+}
+
+function toggleThemeDropdown(){
+  document.getElementById('theme-dropdown').classList.toggle('open');
+}
+
+// Close theme dropdown when clicking outside
+document.addEventListener('click',e=>{
+  if(!document.getElementById('theme-picker')?.contains(e.target)){
+    document.getElementById('theme-dropdown')?.classList.remove('open');
+  }
+});
+
+function initTheme(){
+  const saved=localStorage.getItem('tj_theme')||'void';
+  applyTheme(saved);
 }
 
 // ── HELPERS ───────────────────────────────────────────────
