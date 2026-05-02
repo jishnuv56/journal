@@ -10,7 +10,7 @@
   --bg:#0a0c0f;--surface:#111318;--surface2:#181c24;
   --border:#1e2530;--border2:#252d3a;
   --accent:#00e5a0;--accent2:#0094ff;
-  --loss:#ff4560;--win:#00e5a0;--payout:#a78bfa;
+  --loss:#ff4560;--win:#00e5a0;--payout:#a78bfa;--be:#f97316;
   --text:#e2e8f0;--text2:#8899aa;--text3:#4a5568;
   --mono:'Share Tech Mono',monospace;--sans:'DM Sans',sans-serif;
 }
@@ -73,6 +73,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .trade-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden;}
 .trade-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--win);}
 .trade-card.loss::before{background:var(--loss);}
+.trade-card.be::before{background:var(--be);}
 .trade-card:hover{border-color:var(--border2);background:var(--surface2);}
 .trade-card.selected{border-color:var(--accent);}
 .trade-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
@@ -80,6 +81,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .trade-result{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;}
 .trade-result.W{background:rgba(0,229,160,.12);color:var(--win);}
 .trade-result.L{background:rgba(255,69,96,.12);color:var(--loss);}
+.trade-result.BE{background:rgba(249,115,22,.12);color:var(--be);}
 .trade-card-mid{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .trade-pnl{font-family:var(--mono);font-size:15px;font-weight:600;}
 .trade-pnl.positive{color:var(--win);}.trade-pnl.negative{color:var(--loss);}
@@ -88,6 +90,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .account-tag{background:rgba(0,148,255,.1);color:var(--accent2);padding:2px 6px;border-radius:4px;font-size:10px;font-family:var(--mono);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .copies-badge{background:rgba(246,201,14,.12);color:#f6c90e;padding:2px 6px;border-radius:4px;font-size:10px;font-family:var(--mono);}
 .eval-badge{background:rgba(167,139,250,.12);color:var(--payout);padding:2px 6px;border-radius:4px;font-size:10px;font-family:var(--mono);}
+.dir-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:700;}
+.dir-tag.LONG{background:rgba(0,148,255,.12);color:var(--accent2);}
+.dir-tag.SHORT{background:rgba(167,139,250,.12);color:var(--payout);}
 
 /* Right panel / form */
 .right-panel{background:var(--surface);padding:20px;overflow-y:auto;max-height:calc(100vh - 164px);position:sticky;top:164px;}
@@ -99,11 +104,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .result-toggle{display:flex;}
-.result-btn{flex:1;padding:9px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:700;letter-spacing:2px;transition:all .2s;font-family:var(--sans);}
+.result-btn{flex:1;padding:9px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:2px;transition:all .2s;font-family:var(--sans);}
 .result-btn:first-child{border-radius:6px 0 0 6px;}
 .result-btn:last-child{border-radius:0 6px 6px 0;border-left:none;}
+.result-btn:not(:first-child):not(:last-child){border-left:none;}
 .result-btn.W.active{background:rgba(0,229,160,.15);color:var(--win);border-color:var(--win);}
 .result-btn.L.active{background:rgba(255,69,96,.15);color:var(--loss);border-color:var(--loss);}
+.result-btn.BE.active{background:rgba(249,115,22,.15);color:var(--be);border-color:var(--be);}
+.direction-toggle{display:flex;margin-bottom:13px;}
+.dir-btn{flex:1;padding:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:1px;transition:all .2s;font-family:var(--sans);}
+.dir-btn:first-child{border-radius:6px 0 0 6px;}
+.dir-btn:last-child{border-radius:0 6px 6px 0;border-left:none;}
+.dir-btn.LONG.active{background:rgba(0,148,255,.15);color:var(--accent2);border-color:var(--accent2);}
+.dir-btn.SHORT.active{background:rgba(167,139,250,.15);color:var(--payout);border-color:var(--payout);}
 .copies-box{background:rgba(246,201,14,.04);border:1px solid rgba(246,201,14,.18);border-radius:7px;padding:11px 13px;margin-bottom:13px;}
 .copies-box-title{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#f6c90e;margin-bottom:7px;}
 .copies-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -628,7 +641,8 @@ function renderAll(){renderStats();renderTrades('live');renderAccountFilters();r
 
 function renderStats(){
   const total=trades.length,wins=trades.filter(t=>t.result==='W').length;
-  const wr=total?Math.round(wins/total*100):0;
+  const decidedTrades=trades.filter(t=>t.result!=='BE').length;
+  const wr=decidedTrades?Math.round(wins/decidedTrades*100):0;
   const pnl=trades.reduce((s,t)=>s+(parseFloat(t.pnl)*(parseInt(t.copies)||1)||0),0);
   const rrs=trades.map(t=>parseFloat(t.rr)).filter(Boolean);
   const avgRR=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2):'—';
@@ -683,9 +697,12 @@ function renderTrades(mode){
   if(!filtered.length){listEl.innerHTML='<div class="no-trades">No trades match filter</div>';return;}
   listEl.innerHTML=filtered.map(t=>{
     const basePnl=parseFloat(t.pnl)||0,copies=parseInt(t.copies)||1,totalPnl=basePnl*copies;
-    return`<div class="trade-card ${t.result==='L'?'loss':''} ${t.id===selectedId?'selected':''}" onclick="selectTrade('${t.id}','${mode}')">
+    return`<div class="trade-card ${t.result==='L'?'loss':t.result==='BE'?'be':''} ${t.id===selectedId?'selected':''}" onclick="selectTrade('${t.id}','${mode}')">
       <div class="trade-card-top">
-        <span class="trade-asset">${esc(t.asset)}</span>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="trade-asset">${esc(t.asset)}</span>
+          ${t.direction?`<span class="dir-tag ${t.direction}">${t.direction==='LONG'?'▲':'▼'} ${t.direction}</span>`:''}
+        </div>
         <span class="trade-result ${t.result}">${t.result}</span>
       </div>
       <div class="trade-card-mid">
@@ -761,7 +778,7 @@ function openCalPopup(dateStr,mode){
       return`<div class="cal-popup-trade" onclick="closeCalPopup();switchTab('${tab}');selectTrade('${t.id}','${mode}')">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-family:var(--mono);font-size:13px;font-weight:600;">${esc(t.asset)}</span>
-          <span class="trade-result ${t.result}">${t.result==='W'?'WIN':'LOSS'}</span>
+          <span class="trade-result ${t.result}">${t.result==='W'?'WIN':t.result==='BE'?'BE':'LOSS'}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:7px;">
           <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:${totalPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(totalPnl)}</span>
@@ -915,7 +932,15 @@ function showForm(trade,mode){
       <label>Result</label>
       <div class="result-toggle">
         <button class="result-btn W ${(!t.result||t.result==='W')?'active':''}" onclick="setResult(this,'${mode}')">W</button>
+        <button class="result-btn BE ${t.result==='BE'?'active':''}" onclick="setResult(this,'${mode}')">BE</button>
         <button class="result-btn L ${t.result==='L'?'active':''}" onclick="setResult(this,'${mode}')">L</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Direction</label>
+      <div class="direction-toggle">
+        <button class="dir-btn LONG ${(!t.direction||t.direction==='LONG')?'active':''}" onclick="setDirection(this,'${mode}')">▲ LONG</button>
+        <button class="dir-btn SHORT ${t.direction==='SHORT'?'active':''}" onclick="setDirection(this,'${mode}')">▼ SHORT</button>
       </div>
     </div>
     <div class="form-row">
@@ -1002,8 +1027,10 @@ function updateMultiPreview(mode){
   const panel=document.getElementById(mode==='eval'?'eval-right-panel':'right-panel');
   let basePnl=parseFloat(document.getElementById(`${p}-pnl`)?.value)||0;
   const isLoss=panel?.querySelector('.result-btn.L.active')!==null;
-  if(isLoss&&basePnl>0)basePnl=-basePnl;
-  if(!isLoss&&basePnl<0)basePnl=-basePnl;
+  const isBE=panel?.querySelector('.result-btn.BE.active')!==null;
+  if(isBE) basePnl=0;
+  else if(isLoss&&basePnl>0)basePnl=-basePnl;
+  else if(!isLoss&&basePnl<0)basePnl=-basePnl;
   const container=document.getElementById(`${p}-account-rows`);
   let total=0;
   if(container){
@@ -1017,6 +1044,12 @@ function updateMultiPreview(mode){
     prev.textContent=fmtPnl(total);
     prev.style.color=total>=0?'var(--win)':'var(--loss)';
   }
+}
+
+function setDirection(btn,mode){
+  const panel=mode==='eval'?'eval-right-panel':'right-panel';
+  document.getElementById(panel).querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function handleAssetChange(mode){
@@ -1035,7 +1068,10 @@ async function saveTrade(mode){
   const assetSel=document.getElementById(`${p}-asset`).value;
   const asset=assetSel==='__custom__'?document.getElementById(`${p}-asset-custom`).value.trim():assetSel;
   const panel=document.getElementById(isEval?'eval-right-panel':'right-panel');
-  const result=panel.querySelector('.result-btn.active')?.classList.contains('W')?'W':'L';
+  const resultBtn=panel.querySelector('.result-btn.active');
+  const result=resultBtn?.classList.contains('W')?'W':resultBtn?.classList.contains('BE')?'BE':'L';
+  const dirBtn=panel.querySelector('.dir-btn.active');
+  const direction=dirBtn?.classList.contains('LONG')?'LONG':'SHORT';
   const pnl=document.getElementById(`${p}-pnl`).value;
   const rr=document.getElementById(`${p}-rr`).value;
   const chartLink=document.getElementById(`${p}-chart-link`).value.trim();
@@ -1044,8 +1080,9 @@ async function saveTrade(mode){
 
   // Collect multi-account rows
   let basePnl=parseFloat(pnl)||0;
-  if(result==='L'&&basePnl>0)basePnl=-basePnl;
-  if(result==='W'&&basePnl<0)basePnl=-basePnl;
+  if(result==='BE') basePnl=0;
+  else if(result==='L'&&basePnl>0) basePnl=-basePnl;
+  else if(result==='W'&&basePnl<0) basePnl=-basePnl;
 
   const container=document.getElementById(`${p}-account-rows`);
   const accountRows=[];
@@ -1061,7 +1098,7 @@ async function saveTrade(mode){
   const copies=accountRows.reduce((s,r)=>s+r.copies,0);
 
   const eId=isEval?editingEvalId:editingId;
-  const trade={id:eId||uid(),date,asset,result,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
+  const trade={id:eId||uid(),date,asset,result,direction,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
   if(isEval){
     if(editingEvalId){const idx=evalTrades.findIndex(t=>t.id===editingEvalId);if(idx!==-1)evalTrades[idx]=trade;}
     else evalTrades.unshift(trade);
@@ -1113,9 +1150,12 @@ function showDetail(id,mode){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div>
         <div style="font-family:var(--mono);font-size:19px;font-weight:600;">${esc(t.asset)}</div>
-        <div style="font-size:11px;color:var(--text3);">${fmtDate(t.date)}${isEval?' · <span style="color:var(--payout)">EVAL</span>':''}</div>
+        <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px;">
+          <span>${fmtDate(t.date)}${isEval?' · <span style="color:var(--payout)">EVAL</span>':''}</span>
+          ${t.direction?`<span class="dir-tag ${t.direction}">${t.direction==='LONG'?'▲':'▼'} ${t.direction}</span>`:''}
+        </div>
       </div>
-      <span class="trade-result ${t.result}" style="font-size:13px;padding:4px 12px;">${t.result==='W'?'WIN':'LOSS'}</span>
+      <span class="trade-result ${t.result}" style="font-size:13px;padding:4px 12px;">${t.result==='W'?'WIN':t.result==='BE'?'BE':'LOSS'}</span>
     </div>
     <div class="detail-grid">
       <div class="detail-item"><div class="detail-item-label">PnL / Account</div><div class="detail-item-val" style="color:${basePnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(basePnl)}</div></div>
