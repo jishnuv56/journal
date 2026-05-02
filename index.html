@@ -884,12 +884,12 @@ function showNewTradeForm(mode){
 function showForm(trade,mode){
   const t=trade||{},isEval=mode==='eval';
   const panelId=isEval?'eval-right-panel':'right-panel';
-  const editId=isEval?editingEvalId:editingId;
   const accentColor=isEval?'var(--payout)':'var(--accent)';
-  const accOptions=allAccounts().map(a=>`<option value="${esc(a)}" ${t.account===a?'selected':''}>${esc(a)}</option>`).join('');
   const assetOptions=PRESET_ASSETS.map(a=>`<option value="${a}" ${t.asset===a?'selected':''}>${a}</option>`).join('');
   const isCustomAsset=t.asset&&!PRESET_ASSETS.includes(t.asset);
-  const copies=t.copies||1,basePnl=parseFloat(t.pnl)||0;
+  const basePnl=parseFloat(t.pnl)||0;
+  // Build initial account rows from saved data or default single row
+  const initRows=t.accountRows&&t.accountRows.length?t.accountRows:[{account:t.account||'',copies:t.copies||1}];
 
   document.getElementById(panelId).innerHTML=`
     <div class="form-title">
@@ -921,33 +921,29 @@ function showForm(trade,mode){
     <div class="form-row">
       <div class="form-group">
         <label>PnL / Account ($)</label>
-        <input type="number" id="${isEval?'ef':'f'}-pnl" placeholder="250.00" step="0.01" value="${t.pnl||''}" oninput="updateCopiesPreview('${mode}')">
+        <input type="number" id="${isEval?'ef':'f'}-pnl" placeholder="250.00" step="0.01" value="${Math.abs(basePnl)||''}" oninput="updateMultiPreview('${mode}')">
       </div>
       <div class="form-group">
         <label>RR Ratio</label>
         <input type="number" id="${isEval?'ef':'f'}-rr" placeholder="2.5" step="0.1" min="0" value="${t.rr||''}">
       </div>
     </div>
+
     <div class="form-group">
-      <label>Funded Account</label>
-      <select id="${isEval?'ef':'f'}-account">
-        <option value="">— Select Account —</option>
-        ${accOptions}
-      </select>
-    </div>
-    <div class="copies-box" style="${isEval?'border-color:rgba(167,139,250,.2);background:rgba(167,139,250,.04);':''}">
-      <div class="copies-box-title" style="${isEval?'color:var(--payout);':''}">🔁 Copy Multiplier</div>
-      <div class="copies-row">
-        <div class="form-group" style="margin:0;">
-          <label>Copies</label>
-          <input type="number" id="${isEval?'ef':'f'}-copies" min="1" value="${copies}" oninput="updateCopiesPreview('${mode}')">
-        </div>
-        <div class="form-group" style="margin:0;">
-          <label>Total PnL</label>
-          <div class="copies-result" id="${isEval?'ef':'f'}-copies-preview" style="${isEval?'color:var(--payout);':''}">${fmtPnl(basePnl*copies)}</div>
-        </div>
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Prop Firm Accounts &amp; Copies</span>
+        <button onclick="addAccountRow('${mode}')" style="background:transparent;border:1px solid ${isEval?'var(--payout)':'var(--accent)'};color:${isEval?'var(--payout)':'var(--accent)'};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:var(--sans);">＋ Add Account</button>
+      </label>
+      <div id="${isEval?'ef':'f'}-account-rows" style="display:flex;flex-direction:column;gap:7px;margin-top:6px;">
+        ${initRows.map((r,i)=>buildAccountRowHTML(r.account,r.copies,i,mode)).join('')}
       </div>
     </div>
+
+    <div style="background:${isEval?'rgba(167,139,250,.06)':'rgba(0,229,160,.06)'};border:1px solid ${isEval?'rgba(167,139,250,.2)':'rgba(0,229,160,.2)'};border-radius:7px;padding:10px 13px;margin-bottom:13px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:${isEval?'var(--payout)':'var(--accent)'};">Total PnL (All Accounts)</span>
+      <span id="${isEval?'ef':'f'}-total-preview" style="font-family:var(--mono);font-size:16px;font-weight:700;color:${isEval?'var(--payout)':'var(--accent)'};">$0.00</span>
+    </div>
+
     <div class="form-group">
       <label>Chart Link</label>
       <div class="link-wrap">
@@ -966,7 +962,61 @@ function showForm(trade,mode){
       : `<button class="btn-delete" style="color:var(--text2);border-color:var(--border2);margin-top:7px;" onclick="cancelForm('${mode}')">Cancel</button>`
     }
   `;
-  updateCopiesPreview(mode);
+  updateMultiPreview(mode);
+}
+
+function buildAccountRowHTML(account,copies,idx,mode){
+  const p=mode==='eval'?'ef':'f';
+  const accOptions=allAccounts().map(a=>`<option value="${esc(a)}" ${account===a?'selected':''}>${esc(a)}</option>`).join('');
+  return `<div class="account-row" id="${p}-acc-row-${idx}" style="display:grid;grid-template-columns:1fr 72px 32px;gap:6px;align-items:center;">
+    <select class="acc-row-select" onchange="updateMultiPreview('${mode}')" style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 9px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:100%;">
+      <option value="">— Account —</option>
+      ${accOptions}
+    </select>
+    <input type="number" class="acc-row-copies" min="1" value="${copies||1}" oninput="updateMultiPreview('${mode}')" placeholder="×" title="Copies" style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 6px;color:#f6c90e;font-family:var(--mono);font-size:12px;outline:none;width:100%;text-align:center;">
+    <button onclick="removeAccountRow('${p}-acc-row-${idx}','${mode}')" style="background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:5px;padding:5px 7px;cursor:pointer;font-size:12px;line-height:1;" title="Remove">✕</button>
+  </div>`;
+}
+
+function addAccountRow(mode){
+  const p=mode==='eval'?'ef':'f';
+  const container=document.getElementById(`${p}-account-rows`);
+  const idx=container.children.length;
+  const div=document.createElement('div');
+  div.innerHTML=buildAccountRowHTML('',1,idx,mode);
+  container.appendChild(div.firstElementChild);
+  updateMultiPreview(mode);
+}
+
+function removeAccountRow(rowId,mode){
+  const el=document.getElementById(rowId);
+  const p=mode==='eval'?'ef':'f';
+  const container=document.getElementById(`${p}-account-rows`);
+  if(container.children.length<=1){showToast('At least one account row required','error');return;}
+  if(el)el.remove();
+  updateMultiPreview(mode);
+}
+
+function updateMultiPreview(mode){
+  const p=mode==='eval'?'ef':'f';
+  const panel=document.getElementById(mode==='eval'?'eval-right-panel':'right-panel');
+  let basePnl=parseFloat(document.getElementById(`${p}-pnl`)?.value)||0;
+  const isLoss=panel?.querySelector('.result-btn.L.active')!==null;
+  if(isLoss&&basePnl>0)basePnl=-basePnl;
+  if(!isLoss&&basePnl<0)basePnl=-basePnl;
+  const container=document.getElementById(`${p}-account-rows`);
+  let total=0;
+  if(container){
+    container.querySelectorAll('.account-row').forEach(row=>{
+      const copies=parseInt(row.querySelector('.acc-row-copies')?.value)||1;
+      total+=basePnl*copies;
+    });
+  }
+  const prev=document.getElementById(`${p}-total-preview`);
+  if(prev){
+    prev.textContent=fmtPnl(total);
+    prev.style.color=total>=0?'var(--win)':'var(--loss)';
+  }
 }
 
 function handleAssetChange(mode){
@@ -977,20 +1027,8 @@ function setResult(btn,mode){
   const panel=mode==='eval'?'eval-right-panel':'right-panel';
   document.getElementById(panel).querySelectorAll('.result-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  updateCopiesPreview(mode);
+  updateMultiPreview(mode);
 }
-function updateCopiesPreview(mode){
-  const p=mode==='eval'?'ef':'f';
-  const panel=document.getElementById(mode==='eval'?'eval-right-panel':'right-panel');
-  let pnl=parseFloat(document.getElementById(`${p}-pnl`)?.value)||0;
-  const copies=parseInt(document.getElementById(`${p}-copies`)?.value)||1;
-  const isLoss=panel?.querySelector('.result-btn.L.active')!==null;
-  if(isLoss && pnl>0) pnl=-pnl;
-  if(!isLoss && pnl<0) pnl=-pnl;
-  const prev=document.getElementById(`${p}-copies-preview`);
-  if(prev)prev.textContent=fmtPnl(pnl*copies);
-}
-
 async function saveTrade(mode){
   const p=mode==='eval'?'ef':'f',isEval=mode==='eval';
   const date=document.getElementById(`${p}-date`).value;
@@ -1000,18 +1038,30 @@ async function saveTrade(mode){
   const result=panel.querySelector('.result-btn.active')?.classList.contains('W')?'W':'L';
   const pnl=document.getElementById(`${p}-pnl`).value;
   const rr=document.getElementById(`${p}-rr`).value;
-  const account=document.getElementById(`${p}-account`).value;
-  const copies=parseInt(document.getElementById(`${p}-copies`).value)||1;
   const chartLink=document.getElementById(`${p}-chart-link`).value.trim();
   const notes=document.getElementById(`${p}-notes`).value.trim();
   if(!date||!asset){showToast('Date and Asset are required','error');return;}
-  // Ensure PnL sign matches result: L → always negative, W → always positive
+
+  // Collect multi-account rows
   let basePnl=parseFloat(pnl)||0;
-  if(result==='L' && basePnl>0) basePnl=-basePnl;
-  if(result==='W' && basePnl<0) basePnl=-basePnl;
-  const totalPnl=basePnl*copies;
+  if(result==='L'&&basePnl>0)basePnl=-basePnl;
+  if(result==='W'&&basePnl<0)basePnl=-basePnl;
+
+  const container=document.getElementById(`${p}-account-rows`);
+  const accountRows=[];
+  let totalPnl=0;
+  container.querySelectorAll('.account-row').forEach(row=>{
+    const account=row.querySelector('.acc-row-select')?.value||'';
+    const copies=parseInt(row.querySelector('.acc-row-copies')?.value)||1;
+    accountRows.push({account,copies});
+    totalPnl+=basePnl*copies;
+  });
+  // Primary account = first row (for filtering/display compat)
+  const account=accountRows[0]?.account||'';
+  const copies=accountRows.reduce((s,r)=>s+r.copies,0);
+
   const eId=isEval?editingEvalId:editingId;
-  const trade={id:eId||uid(),date,asset,result,pnl:String(basePnl),copies,totalPnl,rr:rr||'',account,chartLink,notes,updatedAt:new Date().toISOString()};
+  const trade={id:eId||uid(),date,asset,result,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
   if(isEval){
     if(editingEvalId){const idx=evalTrades.findIndex(t=>t.id===editingEvalId);if(idx!==-1)evalTrades[idx]=trade;}
     else evalTrades.unshift(trade);
@@ -1047,9 +1097,18 @@ function selectTrade(id,mode){
 function showDetail(id,mode){
   const isEval=mode==='eval';
   const t=(isEval?evalTrades:trades).find(t=>t.id===id);if(!t)return;
-  const basePnl=parseFloat(t.pnl)||0,copies=parseInt(t.copies)||1,totalPnl=basePnl*copies;
+  const basePnl=parseFloat(t.pnl)||0,totalPnl=t.totalPnl||(basePnl*(t.copies||1));
   const panel=isEval?'eval-right-panel':'right-panel';
   const accentColor=isEval?'var(--payout)':'var(--accent2)';
+  const rows=t.accountRows&&t.accountRows.length?t.accountRows:[{account:t.account||'—',copies:t.copies||1}];
+  const accountRowsHTML=rows.map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:5px;padding:7px 10px;margin-bottom:5px;border:1px solid var(--border);">
+      <span style="font-family:var(--mono);font-size:12px;color:${accentColor};">${esc(r.account||'—')}</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-family:var(--mono);font-size:11px;color:#f6c90e;">×${r.copies}</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:${basePnl*r.copies>=0?'var(--win)':'var(--loss)'};">${fmtPnl(basePnl*r.copies)}</span>
+      </div>
+    </div>`).join('');
   document.getElementById(panel).innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div>
@@ -1061,9 +1120,11 @@ function showDetail(id,mode){
     <div class="detail-grid">
       <div class="detail-item"><div class="detail-item-label">PnL / Account</div><div class="detail-item-val" style="color:${basePnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(basePnl)}</div></div>
       <div class="detail-item"><div class="detail-item-label">RR Ratio</div><div class="detail-item-val">${t.rr?t.rr+'R':'—'}</div></div>
-      <div class="detail-item"><div class="detail-item-label">Copies</div><div class="detail-item-val" style="color:#f6c90e">${copies}×</div></div>
-      <div class="detail-item"><div class="detail-item-label">Total PnL</div><div class="detail-item-val" style="color:${totalPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(totalPnl)}</div></div>
-      <div class="detail-item" style="grid-column:span 2;"><div class="detail-item-label">Funded Account</div><div class="detail-item-val" style="color:${accentColor}">${esc(t.account||'—')}</div></div>
+      <div class="detail-item" style="grid-column:span 2;"><div class="detail-item-label">Total PnL</div><div class="detail-item-val" style="font-size:18px;color:${totalPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(totalPnl)}</div></div>
+    </div>
+    <div style="margin-bottom:13px;">
+      <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;">Prop Firm Accounts</div>
+      ${accountRowsHTML}
     </div>
     ${t.chartLink?`<div style="margin-bottom:12px;">
       <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Chart</div>
