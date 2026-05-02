@@ -10,7 +10,8 @@
   --bg:#0a0c0f;--surface:#111318;--surface2:#181c24;
   --border:#1e2530;--border2:#252d3a;
   --accent:#00e5a0;--accent2:#0094ff;
-  --loss:#ff4560;--win:#00e5a0;--payout:#a78bfa;--be:#f97316;
+  --loss:#ef4444;--win:#22c55e;--payout:#a78bfa;--be:#f97316;
+  --result-win:#22c55e;--result-loss:#ef4444;--result-be:#f97316;
   --text:#e2e8f0;--text2:#8899aa;--text3:#4a5568;
   --mono:'Share Tech Mono',monospace;--sans:'DM Sans',sans-serif;
 }
@@ -19,28 +20,40 @@
   --bg:#060b14;--surface:#0c1525;--surface2:#111e33;
   --border:#162035;--border2:#1e2e4a;
   --accent:#38bdf8;--accent2:#818cf8;
-  --win:#38bdf8;--text:#dde8f5;--text2:#6b8aad;--text3:#344a66;
+  --payout:#a5b4fc;
+  --result-win:#34d399;--result-loss:#f87171;--result-be:#fb923c;
+  --win:#34d399;--loss:#f87171;
+  --text:#dde8f5;--text2:#6b8aad;--text3:#344a66;
 }
 /* ── THEME: EMBER ── */
 [data-theme="ember"]{
   --bg:#0f0b08;--surface:#1a1410;--surface2:#221c16;
   --border:#2e241c;--border2:#3d3028;
   --accent:#f59e0b;--accent2:#fb923c;
-  --win:#f59e0b;--text:#f0e6d8;--text2:#9c7e62;--text3:#5a4535;
+  --payout:#c084fc;
+  --result-win:#4ade80;--result-loss:#fc8181;--result-be:#fbbf24;
+  --win:#4ade80;--loss:#fc8181;
+  --text:#f0e6d8;--text2:#9c7e62;--text3:#5a4535;
 }
 /* ── THEME: AURORA ── */
 [data-theme="aurora"]{
   --bg:#080610;--surface:#110f1e;--surface2:#18162a;
   --border:#221f35;--border2:#2d2945;
   --accent:#e879f9;--accent2:#a78bfa;
-  --win:#e879f9;--text:#ede9f8;--text2:#7c6fa0;--text3:#433b64;
+  --payout:#c4b5fd;
+  --result-win:#86efac;--result-loss:#fca5a5;--result-be:#fdba74;
+  --win:#86efac;--loss:#fca5a5;
+  --text:#ede9f8;--text2:#7c6fa0;--text3:#433b64;
 }
 /* ── THEME: ZINC ── */
 [data-theme="zinc"]{
   --bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;
   --border:#272727;--border2:#333333;
   --accent:#e4e4e7;--accent2:#a1a1aa;
-  --win:#e4e4e7;--text:#f4f4f5;--text2:#71717a;--text3:#3f3f46;
+  --payout:#c4b5fd;
+  --result-win:#86efac;--result-loss:#fca5a5;--result-be:#fdba74;
+  --win:#86efac;--loss:#fca5a5;
+  --text:#f4f4f5;--text2:#71717a;--text3:#3f3f46;
 }
 
 /* Theme picker */
@@ -116,17 +129,17 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 
 /* Trade cards */
 .trade-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden;}
-.trade-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--win);}
-.trade-card.loss::before{background:var(--loss);}
-.trade-card.be::before{background:var(--be);}
+.trade-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--result-win);}
+.trade-card.loss::before{background:var(--result-loss);}
+.trade-card.be::before{background:var(--result-be);}
 .trade-card:hover{border-color:var(--border2);background:var(--surface2);}
 .trade-card.selected{border-color:var(--accent);}
 .trade-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .trade-asset{font-family:var(--mono);font-size:14px;font-weight:600;}
 .trade-result{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;}
-.trade-result.W{background:rgba(0,229,160,.12);color:var(--win);}
-.trade-result.L{background:rgba(255,69,96,.12);color:var(--loss);}
-.trade-result.BE{background:rgba(249,115,22,.12);color:var(--be);}
+.trade-result.W{background:rgba(34,197,94,.13);color:var(--result-win);}
+.trade-result.L{background:rgba(239,68,68,.13);color:var(--result-loss);}
+.trade-result.BE{background:rgba(249,115,22,.13);color:var(--result-be);}
 .trade-card-mid{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .trade-pnl{font-family:var(--mono);font-size:15px;font-weight:600;}
 .trade-pnl.positive{color:var(--win);}.trade-pnl.negative{color:var(--loss);}
@@ -153,9 +166,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .result-btn:first-child{border-radius:6px 0 0 6px;}
 .result-btn:last-child{border-radius:0 6px 6px 0;border-left:none;}
 .result-btn:not(:first-child):not(:last-child){border-left:none;}
-.result-btn.W.active{background:rgba(0,229,160,.15);color:var(--win);border-color:var(--win);}
-.result-btn.L.active{background:rgba(255,69,96,.15);color:var(--loss);border-color:var(--loss);}
-.result-btn.BE.active{background:rgba(249,115,22,.15);color:var(--be);border-color:var(--be);}
+.result-btn.W.active{background:rgba(34,197,94,.15);color:var(--result-win);border-color:var(--result-win);}
+.result-btn.L.active{background:rgba(239,68,68,.15);color:var(--result-loss);border-color:var(--result-loss);}
+.result-btn.BE.active{background:rgba(249,115,22,.15);color:var(--result-be);border-color:var(--result-be);}
 .direction-toggle{display:flex;margin-bottom:13px;}
 .dir-btn{flex:1;padding:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;letter-spacing:1px;transition:all .2s;font-family:var(--sans);}
 .dir-btn:first-child{border-radius:6px 0 0 6px;}
@@ -216,8 +229,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .cal-day-num{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;}
 .cal-cell.today .cal-day-num{color:var(--accent2);font-weight:700;}
 .cal-trade-pip{font-size:10px;margin-bottom:2px;border-radius:3px;padding:1px 5px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-trade-pip.W{background:rgba(0,229,160,.13);color:var(--win);}
-.cal-trade-pip.L{background:rgba(255,69,96,.13);color:var(--loss);}
+.cal-trade-pip.W{background:rgba(34,197,94,.13);color:var(--result-win);}
+.cal-trade-pip.L{background:rgba(239,68,68,.13);color:var(--result-loss);}
 .cal-day-pnl{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:4px;}
 .cal-day-pnl.positive{color:var(--win);}.cal-day-pnl.negative{color:var(--loss);}
 .cal-more{font-size:9px;color:var(--text3);}
@@ -864,7 +877,7 @@ function openCalPopup(dateStr,mode){
     </div>
     <div class="cal-popup-summary">
       <div class="cal-popup-stat"><div class="cal-popup-stat-label">Trades</div><div class="cal-popup-stat-val">${dt.length}</div></div>
-      <div class="cal-popup-stat"><div class="cal-popup-stat-label">W / L</div><div class="cal-popup-stat-val"><span style="color:var(--win)">${wins}W</span>/<span style="color:var(--loss)">${losses}L</span></div></div>
+      <div class="cal-popup-stat"><div class="cal-popup-stat-label">W / L</div><div class="cal-popup-stat-val"><span style="color:var(--result-win)">${wins}W</span>/<span style="color:var(--result-loss)">${losses}L</span></div></div>
       <div class="cal-popup-stat"><div class="cal-popup-stat-label">Day PnL</div><div class="cal-popup-stat-val" style="color:${dayPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(dayPnl)}</div></div>
     </div>
     ${dt.map(t=>{
@@ -1527,7 +1540,7 @@ function renderExpectancyChart(){
       tooltip.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;">Trade #${nearest.x} · ${fmtDate(nearest.date)}</div>
         <div style="display:flex;gap:16px;">
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Asset</div><div style="font-family:var(--mono);font-size:13px;">${esc(nearest.asset)}</div></div>
-          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--win)':'var(--loss)'};">${nearest.result}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--result-win)':'var(--result-loss)'};">${nearest.result}</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Expectancy</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.e>=0?'var(--win)':'var(--loss)'};">${nearest.e>=0?'+':''}${nearest.e.toFixed(4)}</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Win Rate</div><div style="font-family:var(--mono);font-size:13px;">${(nearest.wr*100).toFixed(1)}%</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Avg RR</div><div style="font-family:var(--mono);font-size:13px;">${nearest.rr.toFixed(2)}R</div></div>
@@ -1575,7 +1588,7 @@ function renderExpectancyChart(){
       tooltip.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;">Trade #${nearest.x} · ${fmtDate(nearest.date)}</div>
         <div style="display:flex;gap:14px;">
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Asset</div><div style="font-family:var(--mono);font-size:13px;">${esc(nearest.asset)}</div></div>
-          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--win)':'var(--loss)'};">${nearest.result}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--result-win)':'var(--result-loss)'};">${nearest.result}</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Expectancy</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.e>=0?'var(--win)':'var(--loss)'};">${nearest.e>=0?'+':''}${nearest.e.toFixed(4)}</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Win%</div><div style="font-family:var(--mono);font-size:13px;">${(nearest.wr*100).toFixed(1)}%</div></div>
           <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Avg RR</div><div style="font-family:var(--mono);font-size:13px;">${nearest.rr.toFixed(2)}R</div></div>
