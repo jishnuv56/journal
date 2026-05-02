@@ -382,6 +382,7 @@ select option{background:#111318;}
     <div class="stat-item"><div class="stat-label">Total Trades</div><div class="stat-value" id="stat-total">0</div></div>
     <div class="stat-item"><div class="stat-label">Win Rate</div><div class="stat-value" id="stat-wr">—</div></div>
     <div class="stat-item"><div class="stat-label">Avg RR</div><div class="stat-value" id="stat-rr">—</div></div>
+    <div class="stat-item"><div class="stat-label">Win Streak</div><div class="stat-value positive" id="stat-streak">—</div></div>
     <div class="stat-item"><div class="stat-label">Best Trade</div><div class="stat-value positive" id="stat-best">—</div></div>
     <div class="stat-item"><div class="stat-label">Worst Trade</div><div class="stat-value" id="stat-worst">—</div></div>
     <div class="stat-item"><div class="stat-label">Net PnL</div><div class="stat-value" id="stat-pnl">$0</div></div>
@@ -758,12 +759,49 @@ function renderStats(){
   const best=pnls.length?Math.max(...pnls):null;
   const worst=pnls.length?Math.min(...pnls):null;
 
-  document.getElementById('stat-total').textContent=total;
+  // Win streak: count consecutive W days from most recent backwards (by date)
+  // Group by date → a day is a "win day" if ALL decided trades that day are W
+  // Streak = consecutive win days up to most recent trading day
+  const sorted=[...trades].filter(t=>t.result!=='BE').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  let currentStreak=0,bestStreak=0,tempStreak=0;
+  const seenDates=new Set();
+  const dateBucket={};
+  sorted.forEach(t=>{
+    if(!dateBucket[t.date])dateBucket[t.date]={w:0,l:0};
+    if(t.result==='W')dateBucket[t.date].w++;else dateBucket[t.date].l++;
+  });
+  const tradingDays=Object.keys(dateBucket).sort((a,b)=>new Date(b)-new Date(a));
+  // Current streak from most recent day backwards
+  for(let i=0;i<tradingDays.length;i++){
+    const d=dateBucket[tradingDays[i]];
+    if(d.l===0&&d.w>0){currentStreak++;}else break;
+  }
+  // Best streak ever
+  for(let i=tradingDays.length-1;i>=0;i--){
+    const d=dateBucket[tradingDays[i]];
+    if(d.l===0&&d.w>0){tempStreak++;}else tempStreak=0;
+    if(tempStreak>bestStreak)bestStreak=tempStreak;
+  }
 
+  document.getElementById('stat-total').textContent=total;
   document.getElementById('stat-wr').textContent=total?wr+'%':'—';
   document.getElementById('stat-wr').className='stat-value '+(wr>=50?'positive':'negative');
-
   document.getElementById('stat-rr').textContent=avgRR==='—'?'—':avgRR+'R';
+
+  const streakEl=document.getElementById('stat-streak');
+  if(currentStreak>0){
+    streakEl.textContent=`${currentStreak}🔥`;
+    streakEl.className='stat-value positive';
+    streakEl.title=`Current: ${currentStreak} day${currentStreak>1?'s':''} · Best ever: ${bestStreak} days`;
+  }else if(total>0){
+    streakEl.textContent='—';
+    streakEl.className='stat-value';
+    streakEl.title=`Best ever: ${bestStreak} days`;
+  }else{
+    streakEl.textContent='—';
+    streakEl.className='stat-value';
+    streakEl.title='';
+  }
 
   const bestEl=document.getElementById('stat-best');
   bestEl.textContent=best!==null?fmtPnl(best):'—';
@@ -1236,7 +1274,16 @@ async function deleteTrade(id,mode){
 
 // ── DETAIL VIEW ───────────────────────────────────────────
 function selectTrade(id,mode){
-  if(mode==='eval')selectedEvalTradeId=id;else selectedTradeId=id;
+  const isEval=mode==='eval';
+  const currentId=isEval?selectedEvalTradeId:selectedTradeId;
+  // Clicking the already-selected trade deselects it
+  if(currentId===id){
+    if(isEval)selectedEvalTradeId=null;else selectedTradeId=null;
+    renderTrades(mode);
+    clearPanel(mode);
+    return;
+  }
+  if(isEval)selectedEvalTradeId=id;else selectedTradeId=id;
   renderTrades(mode);showDetail(id,mode);
 }
 function showDetail(id,mode){
