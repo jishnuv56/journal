@@ -143,6 +143,17 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .empty-state p{font-size:12px;line-height:1.6;}
 .no-trades{text-align:center;padding:44px 20px;color:var(--text3);font-size:12px;}
 
+/* Expectancy Chart */
+.expectancy-page{padding:24px 28px;}
+.exp-curve-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.exp-curve-stats{display:flex;gap:10px;flex-wrap:wrap;}
+.exp-curve-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:100px;}
+.exp-curve-stat-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.exp-curve-stat-val{font-family:var(--mono);font-size:16px;font-weight:600;}
+.exp-canvas-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 20px 12px 12px;position:relative;min-height:360px;}
+.exp-no-data{text-align:center;color:var(--text3);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.exp-tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:9px 13px;font-size:12px;pointer-events:none;display:none;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.4);white-space:nowrap;}
+
 /* Calendar */
 .calendar-page{padding:20px 28px;}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
@@ -309,6 +320,7 @@ select option{background:#111318;}
     <button class="tab-btn" id="tab-btn-calendar" onclick="switchTab('calendar')">📅 Calendar</button>
     <button class="tab-btn" id="tab-btn-evaljournal" onclick="switchTab('evaljournal')">🎯 Eval Journal</button>
     <button class="tab-btn" id="tab-btn-evalcalendar" onclick="switchTab('evalcalendar')">🗓 Eval Calendar</button>
+    <button class="tab-btn" id="tab-btn-expectancy" onclick="switchTab('expectancy')">📊 Expectancy</button>
     <button class="tab-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
   </div>
 
@@ -387,6 +399,28 @@ select option{background:#111318;}
       <div class="right-panel" id="eval-right-panel">
         <div class="empty-state"><div class="icon">🎯</div><h3>Select an eval trade</h3><p>Or click <strong>New Eval Trade</strong> to log your evaluation entry.</p></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── EXPECTANCY TAB ── -->
+  <div class="tab-page" id="tab-expectancy">
+    <div class="expectancy-page">
+      <div class="exp-curve-header">
+        <div>
+          <div class="panel-title" style="font-size:15px;margin-bottom:4px;">📊 Expectancy Curve</div>
+          <div style="font-size:11px;color:var(--text3);">Formula: (Win Rate × Avg RR) − (1 − Win Rate) · Rolling over all trades</div>
+        </div>
+        <div class="exp-curve-stats" id="exp-curve-stats"></div>
+      </div>
+      <div class="exp-canvas-wrap">
+        <canvas id="expectancy-canvas"></canvas>
+        <div class="exp-no-data" id="exp-no-data" style="display:none;">
+          <div style="font-size:32px;margin-bottom:10px;">📈</div>
+          <div style="font-size:14px;color:var(--text2);margin-bottom:5px;">No trade data yet</div>
+          <div style="font-size:12px;color:var(--text3);">Log some live trades to see your expectancy curve</div>
+        </div>
+      </div>
+      <div class="exp-tooltip" id="exp-tooltip"></div>
     </div>
   </div>
 
@@ -633,6 +667,7 @@ function switchTab(name){
   if(name==='calendar')renderCalendar('live');
   if(name==='evalcalendar')renderCalendar('eval');
   if(name==='evaljournal'){renderEvalAccountFilters();renderTrades('eval');}
+  if(name==='expectancy')renderExpectancyChart();
   if(name==='expenses')renderFinances();
 }
 
@@ -1204,6 +1239,364 @@ async function saveSettings(){
 function logout(){
   if(!confirm('Log out? Data stays on GitHub.'))return;
   ['tj_token','tj_repo'].forEach(k=>localStorage.removeItem(k));location.reload();
+}
+
+// ── EXPECTANCY CHART ──────────────────────────────────────
+function renderExpectancyChart(){
+  const canvas=document.getElementById('expectancy-canvas');
+  const noData=document.getElementById('exp-no-data');
+  const statsEl=document.getElementById('exp-curve-stats');
+
+  // Sort trades by date ascending, skip BE
+  const sorted=[...trades]
+    .filter(t=>t.result==='W'||t.result==='L')
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  if(sorted.length<2){
+    canvas.style.display='none';
+    noData.style.display='block';
+    statsEl.innerHTML='';
+    return;
+  }
+  noData.style.display='none';
+  canvas.style.display='block';
+
+  // Build rolling expectancy data points
+  // At each trade n, compute expectancy using all trades 1..n
+  const points=[];
+  let wins=0;
+  sorted.forEach((t,i)=>{
+    if(t.result==='W') wins++;
+    const n=i+1;
+    const wr=wins/n;
+    // Collect RR values up to this point (W trades only)
+    const rrVals=sorted.slice(0,n).filter(x=>x.result==='W'&&parseFloat(x.rr)>0).map(x=>parseFloat(x.rr));
+    const avgRR=rrVals.length?(rrVals.reduce((a,b)=>a+b,0)/rrVals.length):1;
+    const expectancy=(wr*avgRR)-(1-wr);
+    points.push({x:n, e:parseFloat(expectancy.toFixed(4)), date:t.date, asset:t.asset, result:t.result, wr:wr, rr:avgRR});
+  });
+
+  // Final stats
+  const last=points[points.length-1];
+  const maxE=Math.max(...points.map(p=>p.e));
+  const minE=Math.min(...points.map(p=>p.e));
+  statsEl.innerHTML=`
+    <div class="exp-curve-stat">
+      <div class="exp-curve-stat-label">Current</div>
+      <div class="exp-curve-stat-val" style="color:${last.e>=0?'var(--win)':'var(--loss)'};">${last.e>=0?'+':''}${last.e.toFixed(3)}</div>
+    </div>
+    <div class="exp-curve-stat">
+      <div class="exp-curve-stat-label">Peak</div>
+      <div class="exp-curve-stat-val" style="color:var(--win);">+${maxE.toFixed(3)}</div>
+    </div>
+    <div class="exp-curve-stat">
+      <div class="exp-curve-stat-label">Trough</div>
+      <div class="exp-curve-stat-val" style="color:var(--loss);">${minE.toFixed(3)}</div>
+    </div>
+    <div class="exp-curve-stat">
+      <div class="exp-curve-stat-label">Win Rate</div>
+      <div class="exp-curve-stat-val" style="color:${last.wr>=0.5?'var(--win)':'var(--loss)'};">${(last.wr*100).toFixed(1)}%</div>
+    </div>
+    <div class="exp-curve-stat">
+      <div class="exp-curve-stat-label">Avg RR</div>
+      <div class="exp-curve-stat-val">${last.rr.toFixed(2)}R</div>
+    </div>`;
+
+  // Draw chart
+  const wrap=canvas.parentElement;
+  const W=wrap.clientWidth-32;
+  const H=Math.max(300, Math.min(420, window.innerHeight*0.42));
+  canvas.width=W;
+  canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  const PAD={top:24,right:24,bottom:48,left:56};
+  const cW=W-PAD.left-PAD.right;
+  const cH=H-PAD.top-PAD.bottom;
+
+  // Y range with padding
+  const yPad=(maxE-minE)*0.15||0.2;
+  const yMin=minE-yPad;
+  const yMax=maxE+yPad;
+  const xMin=1, xMax=points.length;
+
+  function toX(n){return PAD.left+((n-xMin)/(xMax-xMin||1))*cW;}
+  function toY(e){return PAD.top+(1-(e-yMin)/(yMax-yMin))*cH;}
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid lines
+  const yTicks=6;
+  ctx.textAlign='right';
+  ctx.textBaseline='middle';
+  ctx.font='10px Share Tech Mono, monospace';
+  for(let i=0;i<=yTicks;i++){
+    const val=yMin+(yMax-yMin)*(i/yTicks);
+    const y=toY(val);
+    ctx.strokeStyle='rgba(255,255,255,0.05)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
+    ctx.fillStyle=val===0?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.25)';
+    ctx.fillText(val.toFixed(2),PAD.left-6,y);
+  }
+
+  // Zero line
+  if(yMin<0&&yMax>0){
+    const y0=toY(0);
+    ctx.strokeStyle='rgba(255,255,255,0.18)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(PAD.left,y0);ctx.lineTo(W-PAD.right,y0);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.textAlign='right';
+    ctx.fillText('0.00',PAD.left-6,y0);
+  }
+
+  // X axis labels
+  const xTickCount=Math.min(points.length,10);
+  const xStep=Math.ceil(points.length/xTickCount);
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.textAlign='center';
+  ctx.textBaseline='top';
+  for(let i=0;i<points.length;i+=xStep){
+    const p=points[i];
+    ctx.fillText(p.x,toX(p.x),H-PAD.bottom+8);
+  }
+  // X axis label
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.font='10px DM Sans, sans-serif';
+  ctx.fillText('Trades →',PAD.left+cW/2,H-10);
+
+  // Gradient fill under curve (split pos/neg at zero)
+  const z0=toY(0);
+  // Positive area (above zero line) — green
+  ctx.beginPath();
+  ctx.moveTo(toX(points[0].x),toY(Math.max(points[0].e,0)));
+  points.forEach(p=>{ctx.lineTo(toX(p.x),toY(Math.max(p.e,0)));});
+  ctx.lineTo(toX(xMax),z0);ctx.lineTo(toX(xMin),z0);ctx.closePath();
+  const gradPos=ctx.createLinearGradient(0,PAD.top,0,z0);
+  gradPos.addColorStop(0,'rgba(0,229,160,0.22)');
+  gradPos.addColorStop(1,'rgba(0,229,160,0.02)');
+  ctx.fillStyle=gradPos;ctx.fill();
+
+  // Negative area (below zero line) — red
+  ctx.beginPath();
+  ctx.moveTo(toX(points[0].x),toY(Math.min(points[0].e,0)));
+  points.forEach(p=>{ctx.lineTo(toX(p.x),toY(Math.min(p.e,0)));});
+  ctx.lineTo(toX(xMax),z0);ctx.lineTo(toX(xMin),z0);ctx.closePath();
+  const gradNeg=ctx.createLinearGradient(0,z0,0,H-PAD.bottom);
+  gradNeg.addColorStop(0,'rgba(255,69,96,0.04)');
+  gradNeg.addColorStop(1,'rgba(255,69,96,0.20)');
+  ctx.fillStyle=gradNeg;ctx.fill();
+
+  // Main curve line (colored segments by sign)
+  ctx.lineWidth=2.5;
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  for(let i=1;i<points.length;i++){
+    const prev=points[i-1],curr=points[i];
+    ctx.beginPath();
+    ctx.strokeStyle=curr.e>=0?'#00e5a0':'#ff4560';
+    ctx.moveTo(toX(prev.x),toY(prev.e));
+    ctx.lineTo(toX(curr.x),toY(curr.e));
+    ctx.stroke();
+  }
+
+  // Dots at each point
+  points.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(toX(p.x),toY(p.e),3,0,Math.PI*2);
+    ctx.fillStyle=p.e>=0?'#00e5a0':'#ff4560';
+    ctx.fill();
+  });
+
+  // Current value dot (larger)
+  const lp=points[points.length-1];
+  ctx.beginPath();
+  ctx.arc(toX(lp.x),toY(lp.e),6,0,Math.PI*2);
+  ctx.fillStyle=lp.e>=0?'#00e5a0':'#ff4560';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(toX(lp.x),toY(lp.e),6,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.4)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+
+  // Y axis label
+  ctx.save();
+  ctx.translate(14,PAD.top+cH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.font='10px DM Sans, sans-serif';
+  ctx.fillText('Expectancy',0,0);
+  ctx.restore();
+
+  // Tooltip on hover
+  const tooltip=document.getElementById('exp-tooltip');
+  const rect=canvas.getBoundingClientRect();
+
+  function onMouseMove(e){
+    const mx=e.clientX-rect.left;
+    // Find nearest point
+    let nearest=null,minDist=Infinity;
+    points.forEach(p=>{
+      const px=toX(p.x);
+      const d=Math.abs(px-mx);
+      if(d<minDist){minDist=d;nearest=p;}
+    });
+    if(nearest&&minDist<40){
+      // Crosshair
+      ctx.clearRect(0,0,W,H);
+      drawChart(ctx,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX,toY,z0);
+      ctx.strokeStyle='rgba(255,255,255,0.15)';
+      ctx.lineWidth=1;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(toX(nearest.x),PAD.top);ctx.lineTo(toX(nearest.x),H-PAD.bottom);ctx.stroke();
+      ctx.setLineDash([]);
+      // Highlight dot
+      ctx.beginPath();
+      ctx.arc(toX(nearest.x),toY(nearest.e),5,0,Math.PI*2);
+      ctx.fillStyle=nearest.e>=0?'#00e5a0':'#ff4560';
+      ctx.fill();
+      ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
+      // Tooltip
+      tooltip.style.display='block';
+      tooltip.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;">Trade #${nearest.x} · ${fmtDate(nearest.date)}</div>
+        <div style="display:flex;gap:16px;">
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Asset</div><div style="font-family:var(--mono);font-size:13px;">${esc(nearest.asset)}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--win)':'var(--loss)'};">${nearest.result}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Expectancy</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.e>=0?'var(--win)':'var(--loss)'};">${nearest.e>=0?'+':''}${nearest.e.toFixed(4)}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Win Rate</div><div style="font-family:var(--mono);font-size:13px;">${(nearest.wr*100).toFixed(1)}%</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Avg RR</div><div style="font-family:var(--mono);font-size:13px;">${nearest.rr.toFixed(2)}R</div></div>
+        </div>`;
+      const tx=e.clientX+14, ty=e.clientY-60;
+      tooltip.style.left=(tx+200>window.innerWidth?tx-220:tx)+'px';
+      tooltip.style.top=Math.max(10,ty)+'px';
+    }else{
+      tooltip.style.display='none';
+    }
+  }
+  function onMouseLeave(){
+    tooltip.style.display='none';
+    ctx.clearRect(0,0,W,H);
+    drawChart(ctx,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX,toY,z0);
+  }
+  // Remove old listeners by cloning
+  const newCanvas=canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas,canvas);
+  newCanvas.width=W;newCanvas.height=H;
+  const ctx2=newCanvas.getContext('2d');
+  drawChart(ctx2,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,
+    n=>PAD.left+((n-xMin)/(xMax-xMin||1))*cW,
+    e=>PAD.top+(1-(e-yMin)/(yMax-yMin))*cH,
+    toY(0));
+  newCanvas.addEventListener('mousemove',e=>{
+    const r=newCanvas.getBoundingClientRect();
+    const mx=e.clientX-r.left;
+    const ctx3=newCanvas.getContext('2d');
+    const toX2=n=>PAD.left+((n-xMin)/(xMax-xMin||1))*cW;
+    const toY2=ev=>PAD.top+(1-(ev-yMin)/(yMax-yMin))*cH;
+    const z02=toY2(0);
+    let nearest=null,minDist=Infinity;
+    points.forEach(p=>{const d=Math.abs(toX2(p.x)-mx);if(d<minDist){minDist=d;nearest=p;}});
+    if(nearest&&minDist<40){
+      ctx3.clearRect(0,0,W,H);
+      drawChart(ctx3,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX2,toY2,z02);
+      ctx3.strokeStyle='rgba(255,255,255,0.15)';ctx3.lineWidth=1;ctx3.setLineDash([3,3]);
+      ctx3.beginPath();ctx3.moveTo(toX2(nearest.x),PAD.top);ctx3.lineTo(toX2(nearest.x),H-PAD.bottom);ctx3.stroke();
+      ctx3.setLineDash([]);
+      ctx3.beginPath();ctx3.arc(toX2(nearest.x),toY2(nearest.e),5,0,Math.PI*2);
+      ctx3.fillStyle=nearest.e>=0?'#00e5a0':'#ff4560';ctx3.fill();
+      ctx3.strokeStyle='white';ctx3.lineWidth=1.5;ctx3.stroke();
+      tooltip.style.display='block';
+      tooltip.innerHTML=`<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;">Trade #${nearest.x} · ${fmtDate(nearest.date)}</div>
+        <div style="display:flex;gap:14px;">
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Asset</div><div style="font-family:var(--mono);font-size:13px;">${esc(nearest.asset)}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Result</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.result==='W'?'var(--win)':'var(--loss)'};">${nearest.result}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Expectancy</div><div style="font-family:var(--mono);font-size:13px;color:${nearest.e>=0?'var(--win)':'var(--loss)'};">${nearest.e>=0?'+':''}${nearest.e.toFixed(4)}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Win%</div><div style="font-family:var(--mono);font-size:13px;">${(nearest.wr*100).toFixed(1)}%</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Avg RR</div><div style="font-family:var(--mono);font-size:13px;">${nearest.rr.toFixed(2)}R</div></div>
+        </div>`;
+      const tx=e.clientX+14,ty=e.clientY-60;
+      tooltip.style.left=(tx+250>window.innerWidth?e.clientX-240:tx)+'px';
+      tooltip.style.top=Math.max(10,ty)+'px';
+    }else{tooltip.style.display='none';}
+  });
+  newCanvas.addEventListener('mouseleave',()=>{
+    tooltip.style.display='none';
+    const ctx3=newCanvas.getContext('2d');
+    const toX2=n=>PAD.left+((n-xMin)/(xMax-xMin||1))*cW;
+    const toY2=ev=>PAD.top+(1-(ev-yMin)/(yMax-yMin))*cH;
+    ctx3.clearRect(0,0,W,H);
+    drawChart(ctx3,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX2,toY2,toY2(0));
+  });
+}
+
+function drawChart(ctx,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX,toY,z0){
+  ctx.clearRect(0,0,W,H);
+  // Grid
+  const yTicks=6;
+  ctx.font='10px Share Tech Mono, monospace';
+  for(let i=0;i<=yTicks;i++){
+    const val=yMin+(yMax-yMin)*(i/yTicks);
+    const y=toY(val);
+    ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
+    ctx.fillStyle=Math.abs(val)<0.001?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.25)';
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(val.toFixed(2),PAD.left-6,y);
+  }
+  // Zero line
+  if(yMin<0&&yMax>0){
+    ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(PAD.left,z0);ctx.lineTo(W-PAD.right,z0);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // X labels
+  const xStep=Math.ceil(points.length/Math.min(points.length,10));
+  ctx.fillStyle='rgba(255,255,255,0.25)';ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=0;i<points.length;i+=xStep) ctx.fillText(points[i].x,toX(points[i].x),H-PAD.bottom+8);
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='10px DM Sans,sans-serif';
+  ctx.fillText('Trades →',PAD.left+cW/2,H-10);
+  // Gradient fills
+  ctx.beginPath();ctx.moveTo(toX(points[0].x),toY(Math.max(points[0].e,0)));
+  points.forEach(p=>ctx.lineTo(toX(p.x),toY(Math.max(p.e,0))));
+  ctx.lineTo(toX(xMax),z0);ctx.lineTo(toX(xMin),z0);ctx.closePath();
+  const gP=ctx.createLinearGradient(0,PAD.top,0,z0);
+  gP.addColorStop(0,'rgba(0,229,160,0.22)');gP.addColorStop(1,'rgba(0,229,160,0.02)');
+  ctx.fillStyle=gP;ctx.fill();
+  ctx.beginPath();ctx.moveTo(toX(points[0].x),toY(Math.min(points[0].e,0)));
+  points.forEach(p=>ctx.lineTo(toX(p.x),toY(Math.min(p.e,0))));
+  ctx.lineTo(toX(xMax),z0);ctx.lineTo(toX(xMin),z0);ctx.closePath();
+  const gN=ctx.createLinearGradient(0,z0,0,H-PAD.bottom);
+  gN.addColorStop(0,'rgba(255,69,96,0.04)');gN.addColorStop(1,'rgba(255,69,96,0.20)');
+  ctx.fillStyle=gN;ctx.fill();
+  // Line
+  ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';
+  for(let i=1;i<points.length;i++){
+    ctx.beginPath();ctx.strokeStyle=points[i].e>=0?'#00e5a0':'#ff4560';
+    ctx.moveTo(toX(points[i-1].x),toY(points[i-1].e));
+    ctx.lineTo(toX(points[i].x),toY(points[i].e));ctx.stroke();
+  }
+  // Dots
+  points.forEach(p=>{
+    ctx.beginPath();ctx.arc(toX(p.x),toY(p.e),2.5,0,Math.PI*2);
+    ctx.fillStyle=p.e>=0?'#00e5a0':'#ff4560';ctx.fill();
+  });
+  // Last dot
+  const lp=points[points.length-1];
+  ctx.beginPath();ctx.arc(toX(lp.x),toY(lp.e),6,0,Math.PI*2);
+  ctx.fillStyle=lp.e>=0?'#00e5a0':'#ff4560';ctx.fill();
+  ctx.beginPath();ctx.arc(toX(lp.x),toY(lp.e),6,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1.5;ctx.stroke();
+  // Y axis label
+  ctx.save();ctx.translate(14,PAD.top+cH/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='10px DM Sans,sans-serif';
+  ctx.fillText('Expectancy',0,0);ctx.restore();
 }
 
 // ── CANCEL / DESELECT ────────────────────────────────────
