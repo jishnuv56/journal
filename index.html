@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Trading Journal</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0c0f" id="pwa-theme-color">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TradeLog">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<meta name="msapplication-TileImage" content="icons/icon-144.png">
+<meta name="msapplication-TileColor" content="#0a0c0f">
+<link rel="shortcut icon" href="icons/icon-96.png">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -2217,7 +2232,85 @@ function handlePanelClick(e,mode){
   renderTrades(mode);
 }
 
-// ── THEMES ────────────────────────────────────────────────
+// ── PWA SERVICE WORKER REGISTRATION ──────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>{
+        console.log('[PWA] Service Worker registered:', reg.scope);
+        // Notify SW to skip waiting when a new version is found
+        reg.addEventListener('updatefound', ()=>{
+          const newWorker=reg.installing;
+          newWorker.addEventListener('statechange', ()=>{
+            if(newWorker.state==='installed' && navigator.serviceWorker.controller){
+              showToast('🔄 Update available — refresh to apply');
+            }
+          });
+        });
+      })
+      .catch(err=>console.warn('[PWA] SW registration failed:', err));
+  });
+}
+
+// ── PWA INSTALL PROMPT ────────────────────────────────────
+let deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  // Show install button in header if not already installed
+  showInstallButton();
+});
+
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt=null;
+  hideInstallButton();
+  showToast('✅ Trading Journal installed!','success');
+});
+
+function showInstallButton(){
+  if(document.getElementById('pwa-install-btn')) return;
+  const btn=document.createElement('button');
+  btn.id='pwa-install-btn';
+  btn.className='icon-btn';
+  btn.title='Install app';
+  btn.innerHTML='⬇ Install';
+  btn.style.cssText='font-size:11px;padding:5px 9px;color:var(--accent);border-color:var(--accent);';
+  btn.onclick=triggerInstall;
+  document.querySelector('.header-right')?.prepend(btn);
+}
+
+function hideInstallButton(){
+  document.getElementById('pwa-install-btn')?.remove();
+}
+
+async function triggerInstall(){
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const {outcome}=await deferredInstallPrompt.userChoice;
+  console.log('[PWA] Install outcome:', outcome);
+  deferredInstallPrompt=null;
+  hideInstallButton();
+}
+
+// ── SYNC THEME COLOR WITH PWA CHROME ─────────────────────
+// Update the browser/PWA chrome color when theme changes
+const _origApplyTheme=applyTheme;
+// Wrap applyTheme to also update <meta name="theme-color">
+(function(){
+  const THEME_COLORS={
+    void:'#0a0c0f', midnight:'#060b14', ember:'#0f0b08',
+    aurora:'#080610', zinc:'#0d0d0d', slate:'#0a0e14',
+    rose:'#0f080a', forest:'#060e08', ocean:'#040e12',
+    light:'#f8fafc'
+  };
+  const origFn=applyTheme;
+  window.applyTheme=function(name){
+    origFn(name);
+    const meta=document.getElementById('pwa-theme-color');
+    if(meta) meta.content=THEME_COLORS[name]||'#0a0c0f';
+  };
+})();
+
 const THEMES={
   void:    {label:'Void',    accentColor:'#00e5a0'},
   midnight:{label:'Midnight',accentColor:'#38bdf8'},
