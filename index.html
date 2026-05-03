@@ -401,7 +401,44 @@ select option{background:#111318;}
 
 @media(max-width:900px){
   .main-layout{grid-template-columns:1fr;}
-  .right-panel{position:static;max-height:none;}
+  /* Right panel becomes a bottom sheet on mobile */
+  .right-panel{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    max-height:85vh;
+    height:auto;
+    border-radius:18px 18px 0 0;
+    border:1px solid var(--border2);
+    border-bottom:none;
+    z-index:400;
+    overflow-y:auto;
+    padding:20px 20px 32px;
+    transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.32,1,.6,1);
+    box-shadow:0 -8px 40px rgba(0,0,0,.5);
+    /* hidden by default — only slide up when .sheet-open */
+  }
+  .right-panel.sheet-open{
+    transform:translateY(0);
+  }
+  .right-panel::before{
+    content:'';
+    display:block;
+    width:40px;height:4px;
+    background:var(--border2);
+    border-radius:2px;
+    margin:0 auto 16px;
+  }
+  /* Backdrop for bottom sheet */
+  .sheet-backdrop{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:399;
+    animation:fadeIn .2s ease;
+  }
+  .sheet-backdrop.open{display:block;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .finance-summary{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:640px){
@@ -630,6 +667,9 @@ select option{background:#111318;}
     </div>
   </div>
 </div>
+
+<!-- Bottom sheet backdrop (mobile) -->
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeBottomSheet()"></div>
 
 <!-- Cal popup -->
 <div class="cal-popup-overlay" id="cal-popup-overlay" onclick="if(event.target===this)closeCalPopup()">
@@ -1290,6 +1330,7 @@ function showForm(trade,mode){
   `;
   updateMultiPreview(mode);
   updateChecklistScore(mode);
+  openBottomSheet(panelId);
 }
 
 function buildAccountRowHTML(account,copies,idx,mode){
@@ -1427,6 +1468,7 @@ async function deleteTrade(id,mode){
   renderAll();
   const panel=isEval?'eval-right-panel':'right-panel';
   document.getElementById(panel).innerHTML=`<div class="empty-state"><div class="icon">📈</div><h3>Trade deleted</h3></div>`;
+  closeBottomSheet();
   await saveData('Delete trade');
   showToast('🗑 Trade deleted');
 }
@@ -1507,6 +1549,7 @@ function showDetail(id,mode){
     ${t.notes?`<div style="margin-bottom:12px;"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Notes</div><div class="notes-box"><p>${esc(t.notes).replace(/\n/g,'<br>')}</p></div></div>`:''}
     <button class="btn-edit" style="border-color:${accentColor};color:${accentColor};" onclick="editTrade('${t.id}','${mode}')">✏ Edit Trade</button>
   `;
+  openBottomSheet(panel);
 }
 function editTrade(id,mode){
   const isEval=mode==='eval';
@@ -2008,6 +2051,7 @@ function clearPanel(mode){
   const msg=isEval?'Select an eval trade':'Select a trade to view';
   const sub=isEval?'Or click <strong>New Eval Trade</strong> to log your evaluation entry.':'Or click <strong>New Trade</strong> to log your latest entry.';
   document.getElementById(panelId).innerHTML=`<div class="empty-state"><div class="icon">${icon}</div><h3>${msg}</h3><p>${sub}</p></div>`;
+  closeBottomSheet();
 }
 
 function handlePanelClick(e,mode){
@@ -2076,6 +2120,28 @@ document.addEventListener('click',e=>{
 function initTheme(){
   const saved=localStorage.getItem('tj_theme')||'void';
   applyTheme(saved);
+}
+
+// ── BOTTOM SHEET (mobile) ─────────────────────────────────
+function isMobile(){return window.innerWidth<=900;}
+
+function openBottomSheet(panelId){
+  if(!isMobile())return;
+  const panel=document.getElementById(panelId);
+  const backdrop=document.getElementById('sheet-backdrop');
+  if(!panel||!backdrop)return;
+  panel.classList.add('sheet-open');
+  backdrop.classList.add('open');
+  // Prevent body scroll while sheet is open
+  document.body.style.overflow='hidden';
+}
+
+function closeBottomSheet(){
+  ['right-panel','eval-right-panel'].forEach(id=>{
+    document.getElementById(id)?.classList.remove('sheet-open');
+  });
+  document.getElementById('sheet-backdrop')?.classList.remove('open');
+  document.body.style.overflow='';
 }
 
 // ── HELPERS ───────────────────────────────────────────────
