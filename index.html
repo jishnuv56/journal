@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Trading Journal</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -399,53 +399,200 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 select option{background:#111318;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — tablet (≤900px) + portrait
+═══════════════════════════════════════════════════════════ */
 @media(max-width:900px){
+  /* ── Layout ── */
   .main-layout{grid-template-columns:1fr;}
-  /* Right panel becomes a bottom sheet on mobile */
+
+  /* ── Header ── */
+  header{padding:0 14px;height:52px;}
+  .brand{font-size:11px;letter-spacing:2px;}
+  #header-repo{display:none;} /* hide repo path on tablet */
+  .sep{display:none;}
+  /* hide theme label text, show swatch only */
+  #theme-label{display:none;}
+  .theme-picker-btn{padding:5px 7px;gap:4px;}
+
+  /* ── Stats bar — horizontal scroll, compact ── */
+  .stats-bar{padding:0 14px;}
+  .stat-item{padding:10px 14px;min-width:90px;}
+  .stat-value{font-size:14px;}
+  .stat-label{font-size:9px;}
+
+  /* ── Tab nav — scrollable, no wrap ── */
+  .tab-nav{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .tab-nav::-webkit-scrollbar{display:none;}
+  .tab-btn{padding:11px 14px;font-size:11px;white-space:nowrap;flex-shrink:0;}
+
+  /* ── Trade list panel ── */
+  .trade-list-panel{padding:14px 14px;}
+  .panel-header{margin-bottom:12px;}
+
+  /* ── Bottom sheet (right panel) ── */
   .right-panel{
     position:fixed;
     bottom:0;left:0;right:0;
-    max-height:85vh;
+    max-height:88vh;
     height:auto;
     border-radius:18px 18px 0 0;
     border:1px solid var(--border2);
     border-bottom:none;
     z-index:400;
     overflow-y:auto;
-    padding:20px 20px 32px;
+    padding:8px 18px 36px;
     transform:translateY(100%);
     transition:transform .32s cubic-bezier(.32,1,.6,1);
     box-shadow:0 -8px 40px rgba(0,0,0,.5);
-    /* hidden by default — only slide up when .sheet-open */
   }
-  .right-panel.sheet-open{
-    transform:translateY(0);
-  }
+  .right-panel.sheet-open{transform:translateY(0);}
   .right-panel::before{
-    content:'';
-    display:block;
+    content:'';display:block;
     width:40px;height:4px;
-    background:var(--border2);
-    border-radius:2px;
-    margin:0 auto 16px;
+    background:var(--border2);border-radius:2px;
+    margin:6px auto 14px;
   }
-  /* Backdrop for bottom sheet */
+
+  /* ── Sheet backdrop ── */
   .sheet-backdrop{
-    display:none;
-    position:fixed;inset:0;
-    background:rgba(0,0,0,.55);
-    z-index:399;
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.55);z-index:399;
     animation:fadeIn .2s ease;
   }
   .sheet-backdrop.open{display:block;}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .finance-summary{grid-template-columns:1fr 1fr;}
+
+  /* ── Finance / expenses page ── */
+  .expenses-page{padding:16px 14px;}
+  .finance-summary{grid-template-columns:1fr 1fr;gap:8px;}
+  .fin-stat-val{font-size:15px;}
+
+  /* ── Calendar ── */
+  .calendar-page{padding:16px 14px;}
+  .cal-month{font-size:14px;min-width:150px;}
+
+  /* ── Expectancy page ── */
+  .expectancy-page{padding:16px 14px;}
+  .exp-curve-stats{gap:7px;}
+  .exp-curve-stat{padding:8px 11px;min-width:80px;}
+  .exp-curve-stat-val{font-size:13px;}
 }
-@media(max-width:640px){
-  header,.stats-bar,.tab-nav,.trade-list-panel,.calendar-page,.expenses-page{padding-left:12px;padding-right:12px;}
-  .cal-cell{min-height:52px;padding:4px;}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — phone (≤480px)
+═══════════════════════════════════════════════════════════ */
+@media(max-width:480px){
+  /* ── Setup card ── */
+  .setup-card{padding:28px 20px;}
+  .setup-card h1{font-size:22px;}
+
+  /* ── Header — very compact ── */
+  header{padding:0 12px;height:48px;}
+  .brand{font-size:10px;letter-spacing:1.5px;}
+  .sync-status{display:none;} /* hide sync on tiny screens */
+  .icon-btn{padding:5px 7px;font-size:11px;}
+
+  /* ── Stats bar — show only 4 key stats, rest scroll ── */
+  .stats-bar{padding:0 12px;}
+  .stat-item{padding:9px 12px;min-width:80px;}
+  .stat-value{font-size:13px;}
+  .stat-label{font-size:8px;letter-spacing:1px;}
+
+  /* ── Tab nav ── */
+  .tab-btn{padding:10px 11px;font-size:10px;}
+
+  /* ── Trade list ── */
+  .trade-list-panel{padding:12px 12px 80px;} /* bottom padding so FAB doesn't cover last card */
+  .panel-title{font-size:12px;}
+  .btn-add{font-size:11px;padding:7px 11px;}
+
+  /* ── Trade cards — tighter ── */
+  .trade-card{padding:11px 12px;margin-bottom:7px;}
+  .trade-asset{font-size:13px;}
+  .trade-pnl{font-size:14px;}
+
+  /* ── Bottom sheet — full height on tiny screens ── */
+  .right-panel{max-height:92vh;padding:6px 14px 40px;}
+
+  /* ── Form elements in sheet ── */
+  .form-row{grid-template-columns:1fr;gap:8px;}
+  .result-toggle .result-btn{padding:10px 6px;font-size:11px;letter-spacing:1px;}
+  .direction-toggle .dir-btn{padding:9px 6px;font-size:10px;letter-spacing:.5px;}
+
+  /* ── Account rows in form ── */
+  .account-row{grid-template-columns:1fr 56px 28px !important;}
+
+  /* ── Calendar — very compact ── */
+  .cal-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  .cal-month{font-size:13px;min-width:auto;}
+  .cal-cell{min-height:44px;padding:3px 4px;border-radius:5px;}
+  .cal-day-num{font-size:10px;margin-bottom:2px;}
   .cal-trade-pip{display:none;}
-  .finance-summary{grid-template-columns:1fr 1fr;}
+  .cal-day-pnl{font-size:9px;}
+  .cal-dow{font-size:8px;padding:5px 0;}
+  .cal-grid{gap:2px;}
+
+  /* ── Finance page ── */
+  .finance-summary{grid-template-columns:1fr 1fr;gap:6px;}
+  .fin-stat{padding:10px 11px;}
+  .fin-stat-val{font-size:14px;}
+  .exp-table th,.exp-table td{padding:8px 9px;font-size:11px;}
+  /* Hide notes column on tiny screens */
+  .exp-table th:nth-child(5),.exp-table td:nth-child(5){display:none;}
+
+  /* ── Expectancy ── */
+  .exp-curve-header{flex-direction:column;gap:10px;}
+  .exp-curve-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .exp-canvas-wrap{padding:12px 8px 8px 4px;min-height:240px;}
+
+  /* ── Cal popup ── */
+  .cal-popup{padding:16px 14px;border-radius:12px 12px 0 0;max-height:75vh;}
+  .cal-popup-summary{grid-template-columns:1fr 1fr 1fr;gap:5px;}
+
+  /* ── Modals ── */
+  .modal{padding:20px 16px;border-radius:14px 14px 0 0;}
+
+  /* ── Theme picker dropdown ── */
+  .theme-dropdown{right:-40px;min-width:150px;}
+
+  /* ── Filters ── */
+  .filters{gap:6px;}
+  .filter-btn{padding:5px 10px;font-size:10px;}
+  .filter-select{font-size:10px;padding:5px 8px;}
+
+  /* ── Copy box in form ── */
+  .copies-row{grid-template-columns:1fr 1fr;gap:8px;}
+
+  /* ── Session grid ── */
+  .session-grid{grid-template-columns:repeat(3,1fr) !important;}
+  .session-btn{font-size:9px !important;padding:7px 4px !important;}
+
+  /* ── Checklist ── */
+  .checklist-item{padding:7px 8px;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — very small (≤360px)
+═══════════════════════════════════════════════════════════ */
+@media(max-width:360px){
+  .stat-item{min-width:70px;padding:8px 9px;}
+  .stat-value{font-size:12px;}
+  .tab-btn{padding:9px 9px;font-size:9px;}
+  .trade-asset{font-size:12px;}
+  .trade-pnl{font-size:13px;}
+  .brand{display:none;} /* on very tiny screens just show icon buttons */
+}
+
+/* ── Touch target improvements (all mobile) ── */
+@media(hover:none){
+  .filter-btn,.tab-btn,.result-btn,.dir-btn,.session-btn,.timing-btn{
+    min-height:40px;
+  }
+  .icon-btn{min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;}
+  .trade-card{cursor:default;}
+  /* Prevent iOS auto-zoom on input focus (requires font-size ≥ 16px) */
+  input,select,textarea{font-size:16px !important;}
 }
 </style>
 </head>
