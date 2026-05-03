@@ -414,6 +414,25 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 select option{background:#111318;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
+/* ── P&L Breakdown ── */
+.breakdown-page{padding:24px 28px;}
+.bkd-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+.bkd-title{font-size:15px;font-weight:600;}
+.bkd-ctrl-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.bkd-toggle{display:flex;border:1px solid var(--border2);border-radius:7px;overflow:hidden;}
+.bkd-toggle-btn{padding:7px 18px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;}
+.bkd-toggle-btn.active{background:var(--accent);color:#000;font-weight:700;}
+.bkd-toggle-btn:hover:not(.active){background:var(--border2);color:var(--text);}
+.bkd-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.bkd-stat{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;}
+.bkd-stat-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.bkd-stat-val{font-family:var(--mono);font-size:17px;font-weight:600;}
+.bkd-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 20px 14px 16px;position:relative;min-height:300px;margin-bottom:20px;}
+.bkd-chart-wrap canvas{width:100%;display:block;}
+.bkd-no-data{text-align:center;color:var(--text3);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.bkd-tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;display:none;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap;min-width:180px;}
+.bkd-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE — tablet (≤900px) + portrait
 ═══════════════════════════════════════════════════════════ */
@@ -561,6 +580,12 @@ select option{background:#111318;}
   .exp-curve-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
   .exp-canvas-wrap{padding:12px 8px 8px 4px;min-height:240px;}
 
+  /* ── P&L Breakdown ── */
+  .breakdown-page{padding:16px 14px;}
+  .bkd-summary{grid-template-columns:1fr 1fr;gap:6px;}
+  .bkd-stat-val{font-size:14px;}
+  .bkd-chart-wrap{padding:12px 8px 8px 4px;min-height:220px;}
+
   /* ── Cal popup ── */
   .cal-popup{padding:16px 14px;border-radius:12px 12px 0 0;max-height:75vh;}
   .cal-popup-summary{grid-template-columns:1fr 1fr 1fr;gap:5px;}
@@ -687,6 +712,7 @@ select option{background:#111318;}
     <button class="tab-btn" id="tab-btn-evaljournal" onclick="switchTab('evaljournal')">🎯 Eval Journal</button>
     <button class="tab-btn" id="tab-btn-evalcalendar" onclick="switchTab('evalcalendar')">🗓 Eval Calendar</button>
     <button class="tab-btn" id="tab-btn-expectancy" onclick="switchTab('expectancy')">📊 Expectancy</button>
+    <button class="tab-btn" id="tab-btn-breakdown" onclick="switchTab('breakdown')">📆 P&amp;L Breakdown</button>
     <button class="tab-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
   </div>
 
@@ -787,6 +813,47 @@ select option{background:#111318;}
         </div>
       </div>
       <div class="exp-tooltip" id="exp-tooltip"></div>
+    </div>
+  </div>
+
+  <!-- ── P&L BREAKDOWN TAB ── -->
+  <div class="tab-page" id="tab-breakdown">
+    <div class="breakdown-page">
+
+      <!-- Controls row -->
+      <div class="bkd-controls">
+        <div class="bkd-title">📆 P&amp;L Breakdown</div>
+        <div class="bkd-ctrl-group">
+          <div class="bkd-toggle">
+            <button class="bkd-toggle-btn active" id="bkd-btn-monthly" onclick="setBkdMode('monthly',this)">Monthly</button>
+            <button class="bkd-toggle-btn" id="bkd-btn-weekly" onclick="setBkdMode('weekly',this)">Weekly</button>
+          </div>
+          <select id="bkd-year-sel" class="filter-select" onchange="renderBreakdown()" style="min-width:90px;"></select>
+        </div>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="bkd-summary" id="bkd-summary"></div>
+
+      <!-- Bar chart canvas -->
+      <div class="bkd-chart-wrap" id="bkd-chart-wrap">
+        <canvas id="breakdown-canvas"></canvas>
+        <div class="bkd-no-data" id="bkd-no-data" style="display:none;">
+          <div style="font-size:32px;margin-bottom:10px;">📆</div>
+          <div style="font-size:14px;color:var(--text2);margin-bottom:5px;">No trades yet</div>
+          <div style="font-size:12px;color:var(--text3);">Log some trades to see your P&amp;L breakdown</div>
+        </div>
+      </div>
+      <div class="bkd-tooltip" id="bkd-tooltip"></div>
+
+      <!-- Detail table -->
+      <div class="bkd-table-wrap">
+        <table class="exp-table" id="bkd-table">
+          <thead id="bkd-table-head"></thead>
+          <tbody id="bkd-table-body"></tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -1069,6 +1136,7 @@ function switchTab(name){
   if(name==='evalcalendar')renderCalendar('eval');
   if(name==='evaljournal'){renderEvalAccountFilters();renderTrades('eval');}
   if(name==='expectancy')renderExpectancyChart();
+  if(name==='breakdown')renderBreakdown();
   if(name==='expenses')renderFinances();
 }
 
@@ -2193,6 +2261,364 @@ function drawChart(ctx,points,W,H,PAD,cW,cH,yMin,yMax,xMin,xMax,toX,toY,z0){
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='10px DM Sans,sans-serif';
   ctx.fillText('Expectancy',0,0);ctx.restore();
+}
+
+// ── P&L BREAKDOWN CHART ───────────────────────────────────
+let bkdMode = 'monthly'; // 'monthly' | 'weekly'
+
+function setBkdMode(mode, btn) {
+  bkdMode = mode;
+  document.querySelectorAll('.bkd-toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBreakdown();
+}
+
+function renderBreakdown() {
+  const canvas = document.getElementById('breakdown-canvas');
+  const noData = document.getElementById('bkd-no-data');
+  const wrap   = document.getElementById('bkd-chart-wrap');
+
+  if (!trades.length) {
+    canvas.style.display = 'none';
+    noData.style.display = 'block';
+    document.getElementById('bkd-summary').innerHTML = '';
+    document.getElementById('bkd-table-body').innerHTML = '';
+    return;
+  }
+  noData.style.display = 'none';
+  canvas.style.display = 'block';
+
+  // ── Populate year selector ──────────────────────────────
+  const allYears = [...new Set(trades.map(t => t.date.slice(0, 4)))].sort().reverse();
+  const yearSel  = document.getElementById('bkd-year-sel');
+  const prevYear = yearSel.value;
+  yearSel.innerHTML = allYears.map(y => `<option value="${y}">${y}</option>`).join('');
+  if (prevYear && allYears.includes(prevYear)) yearSel.value = prevYear;
+  const selYear = yearSel.value || allYears[0];
+
+  // ── Filter trades to selected year ─────────────────────
+  const yearTrades = trades.filter(t => t.date.startsWith(selYear));
+
+  // ── Group into buckets ─────────────────────────────────
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let buckets = [];
+
+  if (bkdMode === 'monthly') {
+    for (let m = 0; m < 12; m++) {
+      const mm = String(m + 1).padStart(2, '0');
+      const group = yearTrades.filter(t => t.date.startsWith(`${selYear}-${mm}`));
+      const pnl   = group.reduce((s, t) => s + (parseFloat(t.pnl) * (parseInt(t.copies) || 1) || 0), 0);
+      const wins  = group.filter(t => t.result === 'W').length;
+      const losses= group.filter(t => t.result === 'L').length;
+      const bes   = group.filter(t => t.result === 'BE').length;
+      buckets.push({ label: MONTH_NAMES[m], pnl, trades: group.length, wins, losses, bes });
+    }
+  } else {
+    // Weekly — ISO week grouped within selected year
+    const weekMap = {};
+    yearTrades.forEach(t => {
+      const d    = new Date(t.date + 'T12:00:00');
+      const week = getISOWeek(d);
+      const key  = `W${String(week).padStart(2, '0')}`;
+      if (!weekMap[key]) weekMap[key] = { label: key, pnl: 0, trades: 0, wins: 0, losses: 0, bes: 0, startDate: t.date };
+      weekMap[key].pnl    += (parseFloat(t.pnl) * (parseInt(t.copies) || 1) || 0);
+      weekMap[key].trades += 1;
+      if (t.result === 'W') weekMap[key].wins++;
+      else if (t.result === 'L') weekMap[key].losses++;
+      else weekMap[key].bes++;
+    });
+    buckets = Object.values(weekMap).sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  const activeBuckets = bkdMode === 'monthly'
+    ? buckets.filter(b => b.trades > 0 || bkdMode === 'monthly') // show all months
+    : buckets;
+
+  // ── Summary stats ──────────────────────────────────────
+  const totalPnl    = activeBuckets.reduce((s, b) => s + b.pnl, 0);
+  const totalTrades = activeBuckets.reduce((s, b) => s + b.trades, 0);
+  const posCount    = activeBuckets.filter(b => b.pnl > 0).length;
+  const negCount    = activeBuckets.filter(b => b.pnl < 0).length;
+  const pnlValues   = activeBuckets.filter(b => b.trades > 0).map(b => b.pnl);
+  const bestPnl     = pnlValues.length ? Math.max(...pnlValues) : 0;
+  const worstPnl    = pnlValues.length ? Math.min(...pnlValues) : 0;
+  const avgPnl      = pnlValues.length ? totalPnl / pnlValues.length : 0;
+
+  document.getElementById('bkd-summary').innerHTML = `
+    <div class="bkd-stat"><div class="bkd-stat-label">Net P&amp;L (${selYear})</div><div class="bkd-stat-val" style="color:${totalPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(totalPnl)}</div></div>
+    <div class="bkd-stat"><div class="bkd-stat-label">Total Trades</div><div class="bkd-stat-val">${totalTrades}</div></div>
+    <div class="bkd-stat"><div class="bkd-stat-label">Best ${bkdMode==='monthly'?'Month':'Week'}</div><div class="bkd-stat-val" style="color:var(--win)">${fmtPnl(bestPnl)}</div></div>
+    <div class="bkd-stat"><div class="bkd-stat-label">Worst ${bkdMode==='monthly'?'Month':'Week'}</div><div class="bkd-stat-val" style="color:var(--loss)">${fmtPnl(worstPnl)}</div></div>
+    <div class="bkd-stat"><div class="bkd-stat-label">Avg per ${bkdMode==='monthly'?'Month':'Week'}</div><div class="bkd-stat-val" style="color:${avgPnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(avgPnl)}</div></div>
+  `;
+
+  // ── Draw bar chart ─────────────────────────────────────
+  const W = wrap.clientWidth - 36;
+  const H = Math.max(260, Math.min(380, window.innerHeight * 0.38));
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const PAD = { top: 28, right: 20, bottom: 44, left: 64 };
+  const cW  = W - PAD.left - PAD.right;
+  const cH  = H - PAD.top - PAD.bottom;
+
+  const display = bkdMode === 'monthly' ? buckets : activeBuckets;
+  const n       = display.length;
+  const pnlArr  = display.map(b => b.pnl);
+  const rawMax  = Math.max(...pnlArr, 0);
+  const rawMin  = Math.min(...pnlArr, 0);
+  const pad     = (rawMax - rawMin) * 0.15 || 100;
+  const yMax    = rawMax + pad;
+  const yMin    = rawMin - pad;
+
+  function toY(v) { return PAD.top + (1 - (v - yMin) / (yMax - yMin)) * cH; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid + Y labels
+  const yTicks = 5;
+  ctx.font = '10px Share Tech Mono, monospace';
+  for (let i = 0; i <= yTicks; i++) {
+    const v = yMin + (yMax - yMin) * (i / yTicks);
+    const y = toY(v);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    ctx.fillStyle = Math.abs(v) < pad * 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.25)';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const label = Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0);
+    ctx.fillText('$' + label, PAD.left - 6, y);
+  }
+
+  // Zero line
+  if (yMin < 0 && yMax > 0) {
+    const y0 = toY(0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y0); ctx.lineTo(W - PAD.right, y0); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Bars
+  const barGap  = 0.2;
+  const barW    = Math.max(4, (cW / n) * (1 - barGap));
+  const slotW   = cW / n;
+  const y0      = toY(0);
+  const barRx   = Math.min(4, barW / 4);
+  const hitAreas = [];
+
+  display.forEach((b, i) => {
+    const x    = PAD.left + i * slotW + (slotW - barW) / 2;
+    const yTop = b.pnl >= 0 ? toY(b.pnl) : y0;
+    const barH = Math.abs(toY(b.pnl) - y0);
+    const isPos = b.pnl >= 0;
+    const isEmpty = b.trades === 0;
+
+    if (isEmpty) {
+      // Empty month — faint placeholder
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(x, y0 - 1, barW, 2);
+    } else {
+      // Gradient bar
+      const grad = ctx.createLinearGradient(0, yTop, 0, yTop + barH);
+      if (isPos) {
+        grad.addColorStop(0, 'rgba(0,229,160,0.9)');
+        grad.addColorStop(1, 'rgba(0,229,160,0.35)');
+      } else {
+        grad.addColorStop(0, 'rgba(239,68,68,0.35)');
+        grad.addColorStop(1, 'rgba(239,68,68,0.9)');
+      }
+      ctx.fillStyle = grad;
+      // Rounded top corners
+      ctx.beginPath();
+      if (isPos) {
+        ctx.moveTo(x + barRx, yTop);
+        ctx.lineTo(x + barW - barRx, yTop);
+        ctx.quadraticCurveTo(x + barW, yTop, x + barW, yTop + barRx);
+        ctx.lineTo(x + barW, y0); ctx.lineTo(x, y0);
+        ctx.lineTo(x, yTop + barRx);
+        ctx.quadraticCurveTo(x, yTop, x + barRx, yTop);
+      } else {
+        ctx.moveTo(x, y0); ctx.lineTo(x + barW, y0);
+        ctx.lineTo(x + barW, yTop + barH - barRx);
+        ctx.quadraticCurveTo(x + barW, yTop + barH, x + barW - barRx, yTop + barH);
+        ctx.lineTo(x + barRx, yTop + barH);
+        ctx.quadraticCurveTo(x, yTop + barH, x, yTop + barH - barRx);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Value label on bar (only if bar is tall enough)
+      if (barH > 18) {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = 'bold 9px DM Sans, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = isPos ? 'bottom' : 'top';
+        const label = Math.abs(b.pnl) >= 1000 ? (b.pnl / 1000).toFixed(1) + 'k' : b.pnl.toFixed(0);
+        ctx.fillText((b.pnl >= 0 ? '+' : '') + label, x + barW / 2, isPos ? yTop - 3 : yTop + barH + 3);
+      }
+    }
+
+    // X label
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `${n > 26 ? 8 : 10}px Share Tech Mono, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(b.label, x + barW / 2, H - PAD.bottom + 7);
+
+    hitAreas.push({ x, y: yTop, w: barW, h: barH || 4, bucket: b });
+  });
+
+  // ── Tooltip on hover ───────────────────────────────────
+  const tooltip = document.getElementById('bkd-tooltip');
+
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+  newCanvas.width  = W;
+  newCanvas.height = H;
+  const ctx2 = newCanvas.getContext('2d');
+  redrawBkdChart(ctx2, W, H, PAD, cW, cH, display, yMin, yMax, n);
+
+  newCanvas.addEventListener('mousemove', e => {
+    const r    = newCanvas.getBoundingClientRect();
+    const mx   = e.clientX - r.left;
+    const ctx3 = newCanvas.getContext('2d');
+    let hit    = null;
+
+    display.forEach((b, i) => {
+      const x = PAD.left + i * slotW + (slotW - barW) / 2;
+      if (mx >= x && mx <= x + barW) hit = { b, x };
+    });
+
+    if (hit) {
+      redrawBkdChart(ctx3, W, H, PAD, cW, cH, display, yMin, yMax, n);
+      // Hover highlight
+      ctx3.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx3.fillRect(hit.x - 2, PAD.top, barW + 4, cH);
+
+      const b  = hit.b;
+      const wr = b.trades > 0 ? Math.round(b.wins / (b.wins + b.losses || 1) * 100) : 0;
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = `
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:8px;">${b.label} ${bkdMode==='weekly'?'(Week)':''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;">
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">P&L</div><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${b.pnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(b.pnl)}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Trades</div><div style="font-family:var(--mono);font-size:14px;">${b.trades}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Wins</div><div style="font-family:var(--mono);font-size:13px;color:var(--result-win)">${b.wins}</div></div>
+          <div><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Losses</div><div style="font-family:var(--mono);font-size:13px;color:var(--result-loss)">${b.losses}</div></div>
+          <div style="grid-column:span 2;"><div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Win Rate</div><div style="font-family:var(--mono);font-size:13px;color:${wr>=50?'var(--win)':'var(--loss)'}">${b.trades?wr+'%':'—'}</div></div>
+        </div>`;
+      const tx = e.clientX + 16, ty = e.clientY - 70;
+      tooltip.style.left = (tx + 220 > window.innerWidth ? e.clientX - 230 : tx) + 'px';
+      tooltip.style.top  = Math.max(10, ty) + 'px';
+    } else {
+      tooltip.style.display = 'none';
+      redrawBkdChart(ctx3, W, H, PAD, cW, cH, display, yMin, yMax, n);
+    }
+  });
+  newCanvas.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+    const ctx3 = newCanvas.getContext('2d');
+    redrawBkdChart(ctx3, W, H, PAD, cW, cH, display, yMin, yMax, n);
+  });
+
+  // ── Detail table ────────────────────────────────────────
+  const thead = document.getElementById('bkd-table-head');
+  const tbody = document.getElementById('bkd-table-body');
+  thead.innerHTML = `<tr>
+    <th>${bkdMode === 'monthly' ? 'Month' : 'Week'}</th>
+    <th>Net P&amp;L</th>
+    <th>Trades</th>
+    <th>Wins</th>
+    <th>Losses</th>
+    <th>BE</th>
+    <th>Win Rate</th>
+  </tr>`;
+  const tableRows = [...display].filter(b => b.trades > 0).reverse();
+  tbody.innerHTML = tableRows.map(b => {
+    const wr = b.trades > 0 ? Math.round(b.wins / (b.wins + b.losses || 1) * 100) : 0;
+    return `<tr>
+      <td style="font-family:var(--mono);font-weight:600;">${b.label}</td>
+      <td><span style="font-family:var(--mono);font-weight:700;color:${b.pnl>=0?'var(--win)':'var(--loss)'}">${fmtPnl(b.pnl)}</span></td>
+      <td style="font-family:var(--mono);text-align:center;">${b.trades}</td>
+      <td style="font-family:var(--mono);color:var(--result-win);text-align:center;">${b.wins}</td>
+      <td style="font-family:var(--mono);color:var(--result-loss);text-align:center;">${b.losses}</td>
+      <td style="font-family:var(--mono);color:var(--result-be);text-align:center;">${b.bes}</td>
+      <td><span style="font-family:var(--mono);color:${wr>=50?'var(--win)':'var(--loss)'}">${b.trades?wr+'%':'—'}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px;">No trades in ${selYear}</td></tr>`;
+}
+
+function redrawBkdChart(ctx, W, H, PAD, cW, cH, display, yMin, yMax, n) {
+  ctx.clearRect(0, 0, W, H);
+  function toY(v) { return PAD.top + (1 - (v - yMin) / (yMax - yMin)) * cH; }
+  const yTicks = 5;
+  ctx.font = '10px Share Tech Mono, monospace';
+  for (let i = 0; i <= yTicks; i++) {
+    const v = yMin + (yMax - yMin) * (i / yTicks);
+    const y = toY(v);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    ctx.fillStyle = Math.abs(v) < (yMax - yMin) * 0.05 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.25)';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    const label = Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0);
+    ctx.fillText('$' + label, PAD.left - 6, y);
+  }
+  if (yMin < 0 && yMax > 0) {
+    const y0 = toY(0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y0); ctx.lineTo(W - PAD.right, y0); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  const slotW = cW / n;
+  const barW  = Math.max(4, slotW * 0.8);
+  const barRx = Math.min(4, barW / 4);
+  const y0    = toY(0);
+  display.forEach((b, i) => {
+    const x    = PAD.left + i * slotW + (slotW - barW) / 2;
+    const yTop = b.pnl >= 0 ? toY(b.pnl) : y0;
+    const barH = Math.abs(toY(b.pnl) - y0);
+    const isPos = b.pnl >= 0;
+    if (b.trades === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(x, y0 - 1, barW, 2);
+    } else {
+      const grad = ctx.createLinearGradient(0, yTop, 0, yTop + barH);
+      if (isPos) { grad.addColorStop(0,'rgba(0,229,160,0.9)'); grad.addColorStop(1,'rgba(0,229,160,0.35)'); }
+      else        { grad.addColorStop(0,'rgba(239,68,68,0.35)'); grad.addColorStop(1,'rgba(239,68,68,0.9)'); }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      if (isPos) {
+        ctx.moveTo(x + barRx, yTop); ctx.lineTo(x + barW - barRx, yTop);
+        ctx.quadraticCurveTo(x + barW, yTop, x + barW, yTop + barRx);
+        ctx.lineTo(x + barW, y0); ctx.lineTo(x, y0); ctx.lineTo(x, yTop + barRx);
+        ctx.quadraticCurveTo(x, yTop, x + barRx, yTop);
+      } else {
+        ctx.moveTo(x, y0); ctx.lineTo(x + barW, y0);
+        ctx.lineTo(x + barW, yTop + barH - barRx);
+        ctx.quadraticCurveTo(x + barW, yTop + barH, x + barW - barRx, yTop + barH);
+        ctx.lineTo(x + barRx, yTop + barH);
+        ctx.quadraticCurveTo(x, yTop + barH, x, yTop + barH - barRx);
+      }
+      ctx.closePath(); ctx.fill();
+      if (barH > 18) {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = 'bold 9px DM Sans, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = isPos ? 'bottom' : 'top';
+        const lbl = Math.abs(b.pnl) >= 1000 ? (b.pnl / 1000).toFixed(1) + 'k' : b.pnl.toFixed(0);
+        ctx.fillText((b.pnl >= 0 ? '+' : '') + lbl, x + barW / 2, isPos ? yTop - 3 : yTop + barH + 3);
+      }
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `${n > 26 ? 8 : 10}px Share Tech Mono, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(b.label, x + barW / 2, H - PAD.bottom + 7);
+  });
+}
+
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
 // ── CANCEL / DESELECT ────────────────────────────────────
