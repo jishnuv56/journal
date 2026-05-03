@@ -2279,15 +2279,70 @@ function openBottomSheet(panelId){
   if(!panel||!backdrop)return;
   panel.classList.add('sheet-open');
   backdrop.classList.add('open');
-  // Prevent body scroll while sheet is open
   document.body.style.overflow='hidden';
+  attachSwipeDown(panel);
+}
+
+function attachSwipeDown(panel){
+  // Remove any previous listeners by replacing with clone approach via flag
+  if(panel._swipeAttached) return;
+  panel._swipeAttached=true;
+
+  let startY=0, currentY=0, dragging=false;
+
+  panel.addEventListener('touchstart', e=>{
+    // Only start drag if touching near the top 60px (handle area)
+    const touch=e.touches[0];
+    const panelTop=panel.getBoundingClientRect().top;
+    if(touch.clientY - panelTop > 60) return;
+    startY=touch.clientY;
+    currentY=touch.clientY;
+    dragging=true;
+    panel.style.transition='none'; // disable transition while dragging
+  },{passive:true});
+
+  panel.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    currentY=e.touches[0].clientY;
+    const delta=Math.max(0, currentY-startY); // only allow downward drag
+    panel.style.transform=`translateY(${delta}px)`;
+    // Fade backdrop as user drags down
+    const progress=Math.min(delta/240, 1);
+    const backdrop=document.getElementById('sheet-backdrop');
+    if(backdrop) backdrop.style.opacity=String(1-progress*0.7);
+  },{passive:true});
+
+  panel.addEventListener('touchend', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    panel.style.transition=''; // restore transition
+    const delta=currentY-startY;
+    if(delta>100){
+      // Swiped down far enough — close
+      closeBottomSheet();
+    }else{
+      // Snap back
+      panel.style.transform='translateY(0)';
+      const backdrop=document.getElementById('sheet-backdrop');
+      if(backdrop) backdrop.style.opacity='1';
+    }
+  },{passive:true});
 }
 
 function closeBottomSheet(){
   ['right-panel','eval-right-panel'].forEach(id=>{
-    document.getElementById(id)?.classList.remove('sheet-open');
+    const p=document.getElementById(id);
+    if(p){
+      p.classList.remove('sheet-open');
+      p.style.transform=''; // clear any mid-drag transform
+      p._swipeAttached=false; // allow re-attaching on next open
+    }
   });
-  document.getElementById('sheet-backdrop')?.classList.remove('open');
+  const backdrop=document.getElementById('sheet-backdrop');
+  if(backdrop){
+    backdrop.classList.remove('open');
+    backdrop.style.opacity='1'; // reset for next open
+  }
   document.body.style.overflow='';
 }
 
