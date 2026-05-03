@@ -268,7 +268,29 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .empty-state p{font-size:12px;line-height:1.6;}
 .no-trades{text-align:center;padding:44px 20px;color:var(--text3);font-size:12px;}
 
-/* Expectancy Chart */
+/* Checklist */
+.checklist-box{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;margin-bottom:13px;}
+.checklist-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.checklist-item label{font-size:12px;color:var(--text2);cursor:pointer;flex:1;transition:color .15s;}
+.checklist-item input:checked+label{color:var(--text);text-decoration:line-through;opacity:.6;}
+.checklist-score{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;margin-left:auto;}
+.checklist-score.full{background:rgba(34,197,94,.12);color:var(--result-win);}
+.checklist-score.partial{background:rgba(249,115,22,.12);color:var(--result-be);}
+.checklist-score.empty{background:rgba(239,68,68,.12);color:var(--result-loss);}
+
+/* Session picker */
+.session-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.session-btn{padding:5px 10px;border:1px solid var(--border2);border-radius:5px;background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--sans);font-weight:500;}
+.session-btn:hover{border-color:var(--text3);color:var(--text);}
+.session-btn.active{background:rgba(0,148,255,.15);color:var(--accent2);border-color:var(--accent2);}
+.market-timing-row{display:flex;gap:6px;margin-top:6px;}
+.timing-btn{flex:1;padding:6px;border:1px solid var(--border2);border-radius:5px;background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--sans);text-align:center;}
+.timing-btn:hover{border-color:var(--text3);color:var(--text);}
+.timing-btn.active{background:rgba(246,201,14,.12);color:#f6c90e;border-color:#f6c90e;}
+.session-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);background:rgba(0,148,255,.1);color:var(--accent2);}
+.timing-tag{padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);background:rgba(246,201,14,.1);color:#f6c90e;}
 .expectancy-page{padding:24px 28px;}
 .exp-curve-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .exp-curve-stats{display:flex;gap:10px;flex-wrap:wrap;}
@@ -670,14 +692,31 @@ select option{background:#111318;}
 
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settings-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:500px;width:95vw;">
     <h3>⚙ Settings</h3>
-    <p style="font-size:11px;color:var(--text2);margin-bottom:14px;">5 preset accounts always available. Add extras below.</p>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:16px;">5 preset accounts always available. Add extras below.</p>
     <div class="field">
       <label>Extra Funded Accounts (comma separated)</label>
       <input type="text" id="settings-accounts" placeholder="My Other Fund, Custom Account">
     </div>
-    <div style="display:flex;gap:9px;margin-top:4px;">
+
+    <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:.5px;">✅ Pre-Trade Checklist</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Default items are always included. Add your own custom items below.</div>
+
+    <div style="background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:.5px;">DEFAULT ITEMS (always active)</div>
+      ${DEFAULT_CHECKLIST.map(item=>`<div style="font-size:11px;color:var(--text2);padding:3px 0;display:flex;align-items:center;gap:6px;"><span style="color:var(--result-win);">✓</span>${esc(item)}</div>`).join('')}
+    </div>
+
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:.5px;">CUSTOM ITEMS</div>
+    <div id="custom-checklist-items" style="margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="new-checklist-item" placeholder="Add custom checklist item…" style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;" onkeydown="if(event.key==='Enter')addChecklistItem()">
+      <button class="btn-add" onclick="addChecklistItem()" style="flex-shrink:0;">＋ Add</button>
+    </div>
+
+    <div style="display:flex;gap:9px;margin-top:16px;">
       <button class="btn-save" style="margin:0;" onclick="saveSettings()">Save</button>
       <button class="btn-edit" style="margin:0;flex:0 0 auto;width:auto;padding:8px 16px;" onclick="closeSettings()">Cancel</button>
     </div>
@@ -690,14 +729,28 @@ select option{background:#111318;}
 // ── CONSTANTS ─────────────────────────────────────────────
 const PRESET_ACCOUNTS=['LUCID TRADING','APEX TRADER','MY FUNDED FUTURES','TRADEIFY','FUNDEDNEXT'];
 const PRESET_ASSETS=['NQ','ES','YM','RTY','GOLD','SILVER','EURUSD','GBPUSD','USDJPY','AUDUSD','USDCAD','BTC','ETH','SOL'];
+const FUTURES_ASSETS=['NQ','ES','YM','RTY'];
 const DATA_PATH='data/trades.json';
+
+const DEFAULT_CHECKLIST=[
+  'Followed my trading plan',
+  'Checked economic news / calendar',
+  'Proper risk size (max 1-2%)',
+  'Clear entry with confirmation',
+  'Stop loss placed before entry',
+  'Not revenge trading',
+];
+
+const SESSIONS=['London','New York','Asia','London-NY Overlap','Pre-Market','Post-Market'];
+const FUTURES_TIMINGS=['Regular Hours','Pre-Market','Post-Market'];
 
 // ── STATE ─────────────────────────────────────────────────
 let CONFIG={token:'',repo:''};
-let trades=[];        // live/funded trades
-let evalTrades=[];    // evaluation trades
-let finances=[];      // expenses + payouts combined
+let trades=[];
+let evalTrades=[];
+let finances=[];
 let extraAccounts=[];
+let customChecklist=[];
 let currentFilter='all', currentEvalFilter='all';
 let selectedTradeId=null, selectedEvalTradeId=null;
 let editingId=null, editingEvalId=null;
@@ -786,7 +839,7 @@ async function loadData(){
     evalTrades=data.evalTrades||[];
     finances=data.finances||[];
     extraAccounts=data.accounts||[];
-    // Migrate old expenses/payouts arrays if present
+    customChecklist=data.customChecklist||[];
     if(data.expenses&&!finances.length){
       finances=[
         ...data.expenses.map(e=>({...e,type:'expense'})),
@@ -794,13 +847,13 @@ async function loadData(){
       ];
     }
   }else{
-    trades=[];evalTrades=[];finances=[];extraAccounts=[];
-    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts},'Init trading journal');
+    trades=[];evalTrades=[];finances=[];extraAccounts=[];customChecklist=[];
+    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist},'Init trading journal');
   }
 }
 async function saveData(msg='Update'){
   setSyncState('syncing','saving…');
-  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts},msg);setSyncState('synced','synced');}
+  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist},msg);setSyncState('synced','synced');}
   catch(e){setSyncState('error','save failed');showToast('❌ Save failed: '+e.message,'error');}
 }
 
@@ -1161,6 +1214,36 @@ function showForm(trade,mode){
         <button class="dir-btn SHORT ${t.direction==='SHORT'?'active':''}" onclick="setDirection(this,'${mode}')">▼ SHORT</button>
       </div>
     </div>
+
+    <div class="form-group">
+      <label>Session</label>
+      <div class="session-grid" id="${isEval?'ef':'f'}-session-grid">
+        ${SESSIONS.map(s=>`<button class="session-btn ${t.session===s?'active':''}" onclick="setSession(this,'${mode}')">${s}</button>`).join('')}
+      </div>
+      ${FUTURES_ASSETS.includes(t.asset||'')?`
+      <div style="margin-top:8px;">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;">Market Timing</div>
+        <div class="market-timing-row" id="${isEval?'ef':'f'}-timing-row">
+          ${FUTURES_TIMINGS.map(tm=>`<button class="timing-btn ${t.marketTiming===tm?'active':''}" onclick="setTiming(this,'${mode}')">${tm}</button>`).join('')}
+        </div>
+      </div>`:'<div id="${isEval?\'ef\':\'f\'}-timing-row"></div>'}
+    </div>
+
+    <div class="form-group">
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Pre-Trade Checklist</span>
+        <span id="${isEval?'ef':'f'}-checklist-score" class="checklist-score"></span>
+      </label>
+      <div class="checklist-box" id="${isEval?'ef':'f'}-checklist">
+        ${[...DEFAULT_CHECKLIST,...customChecklist].map((item,i)=>{
+          const checked=(t.checklist||[]).includes(item);
+          return`<div class="checklist-item" onclick="toggleCheck(this,'${mode}')">
+            <input type="checkbox" id="${isEval?'ef':'f'}-chk-${i}" ${checked?'checked':''} onclick="event.stopPropagation();updateChecklistScore('${mode}')">
+            <label for="${isEval?'ef':'f'}-chk-${i}">${esc(item)}</label>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>PnL / Account ($)</label>
@@ -1206,6 +1289,7 @@ function showForm(trade,mode){
     }
   `;
   updateMultiPreview(mode);
+  updateChecklistScore(mode);
 }
 
 function buildAccountRowHTML(account,copies,idx,mode){
@@ -1316,7 +1400,10 @@ async function saveTrade(mode){
   const copies=accountRows.reduce((s,r)=>s+r.copies,0);
 
   const eId=isEval?editingEvalId:editingId;
-  const trade={id:eId||uid(),date,asset,result,direction,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
+  const session=getActiveSession(mode);
+  const marketTiming=getActiveTiming(mode);
+  const checklist=getCheckedItems(mode);
+  const trade={id:eId||uid(),date,asset,result,direction,session,marketTiming,checklist,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
   if(isEval){
     if(editingEvalId){const idx=evalTrades.findIndex(t=>t.id===editingEvalId);if(idx!==-1)evalTrades[idx]=trade;}
     else evalTrades.unshift(trade);
@@ -1398,6 +1485,25 @@ function showDetail(id,mode){
       <a href="${esc(t.chartLink)}" target="_blank" style="display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;text-decoration:none;color:var(--accent2);font-size:12px;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
         <span>🔗</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.chartLink)}</span><span style="font-size:10px;">↗</span>
       </a></div>`:''}
+    ${(t.session||t.marketTiming)?`<div style="margin-bottom:12px;display:flex;gap:7px;flex-wrap:wrap;">
+      ${t.session?`<span style="background:rgba(0,148,255,.1);color:var(--accent2);padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);">🕐 ${esc(t.session)}</span>`:''}
+      ${t.marketTiming?`<span style="background:rgba(246,201,14,.1);color:#f6c90e;padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);">⏱ ${esc(t.marketTiming)}</span>`:''}
+    </div>`:''}
+    ${t.checklist&&t.checklist.length?`<div style="margin-bottom:12px;">
+      <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;">
+        <span>Pre-Trade Checklist</span>
+        <span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(34,197,94,.1);color:var(--result-win);">${t.checklist.length}/${[...DEFAULT_CHECKLIST,...customChecklist].length} ✓</span>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;">
+        ${[...DEFAULT_CHECKLIST,...customChecklist].map(item=>{
+          const done=t.checklist.includes(item);
+          return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;">${done?'✅':'⬜'}</span>
+            <span style="font-size:11px;color:${done?'var(--text2)':'var(--text3)'};${done?'text-decoration:line-through;opacity:.6;':''}">${esc(item)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}
     ${t.notes?`<div style="margin-bottom:12px;"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Notes</div><div class="notes-box"><p>${esc(t.notes).replace(/\n/g,'<br>')}</p></div></div>`:''}
     <button class="btn-edit" style="border-color:${accentColor};color:${accentColor};" onclick="editTrade('${t.id}','${mode}')">✏ Edit Trade</button>
   `;
@@ -1407,6 +1513,62 @@ function editTrade(id,mode){
   const t=(isEval?evalTrades:trades).find(t=>t.id===id);if(!t)return;
   if(isEval)editingEvalId=id;else editingId=id;
   showForm(t,mode);
+}
+
+// ── SESSION / TIMING / CHECKLIST ──────────────────────────
+function setSession(btn,mode){
+  const p=mode==='eval'?'ef':'f';
+  const grid=document.getElementById(`${p}-session-grid`);
+  const wasActive=btn.classList.contains('active');
+  grid.querySelectorAll('.session-btn').forEach(b=>b.classList.remove('active'));
+  if(!wasActive) btn.classList.add('active'); // toggle off if clicking same
+}
+
+function setTiming(btn,mode){
+  const p=mode==='eval'?'ef':'f';
+  const row=document.getElementById(`${p}-timing-row`);
+  if(!row) return;
+  const wasActive=btn.classList.contains('active');
+  row.querySelectorAll('.timing-btn').forEach(b=>b.classList.remove('active'));
+  if(!wasActive) btn.classList.add('active');
+}
+
+function toggleCheck(item,mode){
+  const cb=item.querySelector('input[type=checkbox]');
+  if(cb){ cb.checked=!cb.checked; updateChecklistScore(mode); }
+}
+
+function updateChecklistScore(mode){
+  const p=mode==='eval'?'ef':'f';
+  const box=document.getElementById(`${p}-checklist`);
+  const scoreEl=document.getElementById(`${p}-checklist-score`);
+  if(!box||!scoreEl) return;
+  const all=box.querySelectorAll('input[type=checkbox]');
+  const checked=box.querySelectorAll('input[type=checkbox]:checked');
+  const total=all.length, done=checked.length;
+  scoreEl.textContent=`${done}/${total}`;
+  scoreEl.className='checklist-score '+(done===total&&total>0?'full':done>0?'partial':'empty');
+}
+
+function getCheckedItems(mode){
+  const p=mode==='eval'?'ef':'f';
+  const box=document.getElementById(`${p}-checklist`);
+  if(!box) return [];
+  return [...box.querySelectorAll('input[type=checkbox]:checked')].map(cb=>{
+    return cb.nextElementSibling?.textContent||'';
+  }).filter(Boolean);
+}
+
+function getActiveSession(mode){
+  const p=mode==='eval'?'ef':'f';
+  const grid=document.getElementById(`${p}-session-grid`);
+  return grid?.querySelector('.session-btn.active')?.textContent||'';
+}
+
+function getActiveTiming(mode){
+  const p=mode==='eval'?'ef':'f';
+  const row=document.getElementById(`${p}-timing-row`);
+  return row?.querySelector('.timing-btn.active')?.textContent||'';
 }
 
 // ── FILTERS ───────────────────────────────────────────────
@@ -1419,13 +1581,44 @@ function setFilter(val,btn,mode){
 }
 
 // ── SETTINGS ──────────────────────────────────────────────
-function openSettings(){document.getElementById('settings-accounts').value=extraAccounts.join(', ');document.getElementById('settings-modal').classList.add('open');}
+function openSettings(){
+  document.getElementById('settings-accounts').value=extraAccounts.join(', ');
+  renderCustomChecklist();
+  document.getElementById('settings-modal').classList.add('open');
+}
 function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+
+function renderCustomChecklist(){
+  const el=document.getElementById('custom-checklist-items');
+  if(!el) return;
+  if(!customChecklist.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 0;">No custom items yet.</div>';return;}
+  el.innerHTML=customChecklist.map((item,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
+      <span style="flex:1;font-size:11px;color:var(--text2);">${esc(item)}</span>
+      <button onclick="removeChecklistItem(${i})" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function addChecklistItem(){
+  const input=document.getElementById('new-checklist-item');
+  const val=input.value.trim();
+  if(!val){showToast('Enter a checklist item','error');return;}
+  if(DEFAULT_CHECKLIST.includes(val)||customChecklist.includes(val)){showToast('Item already exists','error');return;}
+  customChecklist.push(val);
+  input.value='';
+  renderCustomChecklist();
+}
+
+function removeChecklistItem(idx){
+  customChecklist.splice(idx,1);
+  renderCustomChecklist();
+}
+
 async function saveSettings(){
   const raw=document.getElementById('settings-accounts').value;
   extraAccounts=raw.split(',').map(s=>s.trim()).filter(Boolean);
   renderAccountFilters();renderEvalAccountFilters();closeSettings();
-  await saveData('Update accounts');showToast('✅ Settings saved');
+  await saveData('Update settings');showToast('✅ Settings saved');
 }
 
 function logout(){
