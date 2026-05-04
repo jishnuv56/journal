@@ -1490,13 +1490,12 @@ function showForm(trade,mode){
       <div class="session-grid" id="${isEval?'ef':'f'}-session-grid">
         ${SESSIONS.map(s=>`<button class="session-btn ${t.session===s?'active':''}" onclick="setSession(this,'${mode}')">${s}</button>`).join('')}
       </div>
-      ${FUTURES_ASSETS.includes(t.asset||'')?`
-      <div style="margin-top:8px;">
-        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;">Market Timing</div>
+      <div id="${isEval?'ef':'f'}-timing-wrap" style="margin-top:8px;${FUTURES_ASSETS.includes(t.asset||'')?'':'display:none;'}">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;">Market Timing (Futures only)</div>
         <div class="market-timing-row" id="${isEval?'ef':'f'}-timing-row">
           ${FUTURES_TIMINGS.map(tm=>`<button class="timing-btn ${t.marketTiming===tm?'active':''}" onclick="setTiming(this,'${mode}')">${tm}</button>`).join('')}
         </div>
-      </div>`:'<div id="${isEval?\'ef\':\'f\'}-timing-row"></div>'}
+      </div>
     </div>
 
     <div class="form-group">
@@ -1541,12 +1540,13 @@ function showForm(trade,mode){
     </div>
 
     <div class="form-group">
-      <label>Chart Link</label>
-      <div class="link-wrap">
-        <span class="link-icon">🔗</span>
-        <input type="url" id="${isEval?'ef':'f'}-chart-link" placeholder="https://tradingview.com/x/…" value="${esc(t.chartLink||'')}">
+      <label style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Chart Links</span>
+        <button onclick="addChartLink('${mode}')" style="background:transparent;border:1px solid var(--accent2);color:var(--accent2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:var(--sans);">＋ Add Link</button>
+      </label>
+      <div id="${isEval?'ef':'f'}-chart-links" style="display:flex;flex-direction:column;gap:6px;">
+        ${(t.chartLinks&&t.chartLinks.length?t.chartLinks:t.chartLink?[{label:'',url:t.chartLink}]:[{label:'',url:''}]).map((cl,i)=>buildChartLinkRowHTML(cl.label||'',cl.url||'',i,mode)).join('')}
       </div>
-      ${t.chartLink?`<button class="link-open" onclick="window.open('${esc(t.chartLink)}','_blank')">Open screenshot →</button>`:''}
     </div>
     <div class="form-group">
       <label>Execution Notes</label>
@@ -1561,6 +1561,61 @@ function showForm(trade,mode){
   updateMultiPreview(mode);
   updateChecklistScore(mode);
   openBottomSheet(panelId);
+}
+
+function buildChartLinkRowHTML(label,url,idx,mode){
+  const p=mode==='eval'?'ef':'f';
+  return`<div class="chart-link-row" id="${p}-cl-row-${idx}" style="display:flex;flex-direction:column;gap:4px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;position:relative;">
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input type="text" class="cl-label" placeholder="Label (e.g. Entry, 15m, HTF…)" value="${esc(label)}"
+        style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text2);font-family:var(--sans);font-size:11px;padding:3px 2px;outline:none;">
+      <button onclick="removeChartLink('${p}-cl-row-${idx}','${mode}')"
+        style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0;" title="Remove">✕</button>
+    </div>
+    <div class="link-wrap" style="margin-top:2px;">
+      <span class="link-icon">🔗</span>
+      <input type="url" class="cl-url" placeholder="https://www.tradingview.com/x/…" value="${esc(url)}"
+        style="width:100%;background:transparent;border:1px solid var(--border2);border-radius:5px;padding:7px 10px 7px 28px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+    </div>
+    ${url?`<button class="link-open" onclick="window.open('${esc(url)}','_blank')">Open →</button>`:''}
+  </div>`;
+}
+
+function addChartLink(mode){
+  const p=mode==='eval'?'ef':'f';
+  const container=document.getElementById(`${p}-chart-links`);
+  const idx=container.children.length;
+  const div=document.createElement('div');
+  div.innerHTML=buildChartLinkRowHTML('','',idx,mode);
+  container.appendChild(div.firstElementChild);
+}
+
+function removeChartLink(rowId,mode){
+  const el=document.getElementById(rowId);
+  const p=mode==='eval'?'ef':'f';
+  const container=document.getElementById(`${p}-chart-links`);
+  if(container.children.length<=1){
+    // Just clear it rather than removing the last row
+    const input=el.querySelector('.cl-url');
+    const label=el.querySelector('.cl-label');
+    if(input)input.value='';
+    if(label)label.value='';
+    return;
+  }
+  if(el)el.remove();
+}
+
+function getChartLinks(mode){
+  const p=mode==='eval'?'ef':'f';
+  const container=document.getElementById(`${p}-chart-links`);
+  if(!container)return[];
+  const links=[];
+  container.querySelectorAll('.chart-link-row').forEach(row=>{
+    const url=(row.querySelector('.cl-url')?.value||'').trim();
+    const label=(row.querySelector('.cl-label')?.value||'').trim();
+    if(url) links.push({label,url});
+  });
+  return links;
 }
 
 function buildAccountRowHTML(account,copies,idx,mode){
@@ -1627,7 +1682,17 @@ function setDirection(btn,mode){
 
 function handleAssetChange(mode){
   const p=mode==='eval'?'ef':'f';
-  document.getElementById(`${p}-asset-custom`).style.display=document.getElementById(`${p}-asset`).value==='__custom__'?'block':'none';
+  const assetSel=document.getElementById(`${p}-asset`);
+  const customInput=document.getElementById(`${p}-asset-custom`);
+  const timingWrap=document.getElementById(`${p}-timing-wrap`);
+  if(customInput) customInput.style.display=assetSel.value==='__custom__'?'block':'none';
+  const isFutures=FUTURES_ASSETS.includes(assetSel.value);
+  if(timingWrap) timingWrap.style.display=isFutures?'block':'none';
+  // Clear timing selection if switching away from futures
+  if(!isFutures){
+    const timingRow=document.getElementById(`${p}-timing-row`);
+    if(timingRow) timingRow.querySelectorAll('.timing-btn').forEach(b=>b.classList.remove('active'));
+  }
 }
 function setResult(btn,mode){
   const panel=mode==='eval'?'eval-right-panel':'right-panel';
@@ -1647,7 +1712,8 @@ async function saveTrade(mode){
   const direction=dirBtn?.classList.contains('LONG')?'LONG':'SHORT';
   const pnl=document.getElementById(`${p}-pnl`).value;
   const rr=document.getElementById(`${p}-rr`).value;
-  const chartLink=document.getElementById(`${p}-chart-link`).value.trim();
+  const chartLinks=getChartLinks(mode);
+  const chartLink=chartLinks[0]?.url||''; // keep for backwards compat
   const notes=document.getElementById(`${p}-notes`).value.trim();
   if(!date||!asset){showToast('Date and Asset are required','error');return;}
 
@@ -1674,7 +1740,7 @@ async function saveTrade(mode){
   const session=getActiveSession(mode);
   const marketTiming=getActiveTiming(mode);
   const checklist=getCheckedItems(mode);
-  const trade={id:eId||uid(),date,asset,result,direction,session,marketTiming,checklist,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,notes,updatedAt:new Date().toISOString()};
+  const trade={id:eId||uid(),date,asset,result,direction,session,marketTiming,checklist,pnl:String(basePnl),copies,totalPnl,accountRows,account,rr:rr||'',chartLink,chartLinks,notes,updatedAt:new Date().toISOString()};
   if(isEval){
     if(editingEvalId){const idx=evalTrades.findIndex(t=>t.id===editingEvalId);if(idx!==-1)evalTrades[idx]=trade;}
     else evalTrades.unshift(trade);
@@ -1752,11 +1818,19 @@ function showDetail(id,mode){
       <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;">Prop Firm Accounts</div>
       ${accountRowsHTML}
     </div>
-    ${t.chartLink?`<div style="margin-bottom:12px;">
-      <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Chart</div>
-      <a href="${esc(t.chartLink)}" target="_blank" style="display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;text-decoration:none;color:var(--accent2);font-size:12px;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
-        <span>🔗</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.chartLink)}</span><span style="font-size:10px;">↗</span>
-      </a></div>`:''}
+    ${(()=>{
+      const links=t.chartLinks&&t.chartLinks.length?t.chartLinks:(t.chartLink?[{label:'',url:t.chartLink}]:[]);
+      if(!links.length)return'';
+      return`<div style="margin-bottom:12px;">
+        <div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;">Chart Links</div>
+        ${links.map(cl=>`
+          <a href="${esc(cl.url)}" target="_blank" style="display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:8px 11px;text-decoration:none;color:var(--accent2);font-size:12px;margin-bottom:5px;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border2)'">
+            <span>🔗</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${cl.label?`<span style="color:var(--text3);margin-right:6px;font-size:10px;">${esc(cl.label)}</span>`:''}${esc(cl.url)}</span>
+            <span style="font-size:10px;flex-shrink:0;">↗</span>
+          </a>`).join('')}
+      </div>`;
+    })()}
     ${(t.session||t.marketTiming)?`<div style="margin-bottom:12px;display:flex;gap:7px;flex-wrap:wrap;">
       ${t.session?`<span style="background:rgba(0,148,255,.1);color:var(--accent2);padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);">🕐 ${esc(t.session)}</span>`:''}
       ${t.marketTiming?`<span style="background:rgba(246,201,14,.1);color:#f6c90e;padding:3px 9px;border-radius:4px;font-size:11px;font-family:var(--mono);">⏱ ${esc(t.marketTiming)}</span>`:''}
