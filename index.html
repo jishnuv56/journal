@@ -440,6 +440,38 @@ select option{background:#111318;}
 .bkd-tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;display:none;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap;min-width:180px;}
 .bkd-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 
+/* ── Notes Tab ── */
+.notes-page{padding:20px 28px;}
+.notes-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.note-cat-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--sans);}
+.note-cat-btn:hover{color:var(--text);}
+.note-cat-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+.note-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:10px;position:relative;overflow:hidden;transition:border-color .2s;}
+.note-card:hover{border-color:var(--border2);}
+.note-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent2);}
+.note-card.cat-Mistake::before{background:var(--loss);}
+.note-card.cat-Pattern::before{background:var(--win);}
+.note-card.cat-Rule::before{background:var(--payout);}
+.note-card.cat-Psychology::before{background:#f6c90e;}
+.note-card.cat-Other::before{background:var(--text3);}
+.note-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;}
+.note-card-title{font-size:13px;font-weight:600;flex:1;}
+.note-card-actions{display:flex;gap:6px;flex-shrink:0;}
+.note-cat-tag{font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-weight:600;}
+.note-cat-tag.Insight{background:rgba(0,148,255,.12);color:var(--accent2);}
+.note-cat-tag.Pattern{background:rgba(34,197,94,.12);color:var(--win);}
+.note-cat-tag.Mistake{background:rgba(239,68,68,.12);color:var(--loss);}
+.note-cat-tag.Rule{background:rgba(167,139,250,.12);color:var(--payout);}
+.note-cat-tag.Psychology{background:rgba(246,201,14,.12);color:#f6c90e;}
+.note-cat-tag.Other{background:rgba(74,85,104,.2);color:var(--text2);}
+.note-card-content{font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;}
+.note-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.note-card-date{font-size:10px;color:var(--text3);font-family:var(--mono);}
+.notes-empty{text-align:center;padding:56px 20px;color:var(--text3);}
+.notes-empty .icon{font-size:36px;margin-bottom:10px;}
+.notes-empty h3{font-size:14px;color:var(--text2);margin-bottom:5px;}
+.notes-empty p{font-size:12px;line-height:1.6;}
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE — tablet (≤900px) + portrait
 ═══════════════════════════════════════════════════════════ */
@@ -739,6 +771,7 @@ select option{background:#111318;}
         <button class="tab-sub-btn" id="tab-btn-expectancy" onclick="switchTab('expectancy')">📊 Expectancy</button>
         <button class="tab-sub-btn" id="tab-btn-breakdown" onclick="switchTab('breakdown')">📆 P&amp;L Breakdown</button>
         <button class="tab-sub-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
+        <button class="tab-sub-btn" id="tab-btn-notes" onclick="switchTab('notes')">📝 Notes</button>
       </div>
     </div>
   </div>
@@ -920,6 +953,64 @@ select option{background:#111318;}
         </table>
         <div class="exp-empty" id="payout-empty">No payouts recorded yet.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── NOTES TAB ── -->
+  <div class="tab-page" id="tab-notes">
+    <div class="notes-page">
+      <div class="notes-header">
+        <div>
+          <div class="panel-title" style="font-size:14px;">📝 Trading Notes</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Insights, observations and lessons learned</div>
+        </div>
+        <button class="btn-add" onclick="openNoteForm()">＋ New Note</button>
+      </div>
+
+      <!-- Note form (hidden by default) -->
+      <div id="note-form-wrap" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:18px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;">
+          <div style="font-size:12px;font-weight:600;" id="note-form-title">＋ New Note</div>
+          <button class="icon-btn" onclick="closeNoteForm()" style="font-size:10px;padding:3px 7px;">✕</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Title</label>
+          <input type="text" id="note-title-input" placeholder="e.g. NQ breakout pattern observation…" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Category</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="note-category-row">
+            <button class="note-cat-btn active" data-cat="Insight" onclick="selectNoteCategory(this)">💡 Insight</button>
+            <button class="note-cat-btn" data-cat="Pattern" onclick="selectNoteCategory(this)">📈 Pattern</button>
+            <button class="note-cat-btn" data-cat="Mistake" onclick="selectNoteCategory(this)">⚠️ Mistake</button>
+            <button class="note-cat-btn" data-cat="Rule" onclick="selectNoteCategory(this)">📏 Rule</button>
+            <button class="note-cat-btn" data-cat="Psychology" onclick="selectNoteCategory(this)">🧠 Psychology</button>
+            <button class="note-cat-btn" data-cat="Other" onclick="selectNoteCategory(this)">📌 Other</button>
+          </div>
+        </div>
+        <div style="margin-bottom:13px;">
+          <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Content</label>
+          <textarea id="note-content-input" placeholder="Write your insight or observation here…" style="width:100%;min-height:120px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;resize:vertical;line-height:1.6;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-save" style="margin:0;" onclick="saveNote()">💾 Save Note</button>
+          <button class="btn-edit" style="margin:0;flex:0 0 auto;width:auto;padding:8px 16px;" onclick="closeNoteForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Filter row -->
+      <div class="filters" id="note-filters" style="margin-bottom:16px;">
+        <button class="filter-btn active" onclick="setNoteFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setNoteFilter('Insight',this)">💡 Insight</button>
+        <button class="filter-btn" onclick="setNoteFilter('Pattern',this)">📈 Pattern</button>
+        <button class="filter-btn" onclick="setNoteFilter('Mistake',this)">⚠️ Mistake</button>
+        <button class="filter-btn" onclick="setNoteFilter('Rule',this)">📏 Rule</button>
+        <button class="filter-btn" onclick="setNoteFilter('Psychology',this)">🧠 Psychology</button>
+        <button class="filter-btn" onclick="setNoteFilter('Other',this)">📌 Other</button>
+      </div>
+
+      <!-- Notes list -->
+      <div id="notes-list"></div>
     </div>
   </div>
 </div>
@@ -1136,6 +1227,7 @@ async function loadData(){
     finances=data.finances||[];
     extraAccounts=data.accounts||[];
     customChecklist=data.customChecklist||[];
+    notes=data.notes||[];
     if(data.expenses&&!finances.length){
       finances=[
         ...data.expenses.map(e=>({...e,type:'expense'})),
@@ -1143,13 +1235,13 @@ async function loadData(){
       ];
     }
   }else{
-    trades=[];evalTrades=[];finances=[];extraAccounts=[];customChecklist=[];
-    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist},'Init trading journal');
+    trades=[];evalTrades=[];finances=[];extraAccounts=[];customChecklist=[];notes=[];
+    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes},'Init trading journal');
   }
 }
 async function saveData(msg='Update'){
   setSyncState('syncing','saving…');
-  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist},msg);setSyncState('synced','synced');}
+  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes},msg);setSyncState('synced','synced');}
   catch(e){setSyncState('error','save failed');showToast('❌ Save failed: '+e.message,'error');}
 }
 
@@ -1157,7 +1249,7 @@ async function saveData(msg='Update'){
 const TAB_GROUPS={
   list:'funded', calendar:'funded',
   evaljournal:'eval', evalcalendar:'eval',
-  expectancy:'analysis', breakdown:'analysis', expenses:'analysis'
+  expectancy:'analysis', breakdown:'analysis', expenses:'analysis', notes:'analysis'
 };
 
 function switchGroup(grp){
@@ -1189,10 +1281,117 @@ function switchTab(name){
   if(name==='expectancy')renderExpectancyChart();
   if(name==='breakdown')renderBreakdown();
   if(name==='expenses')renderFinances();
+  if(name==='notes')renderNotes();
 }
 
 // ── RENDER ALL ────────────────────────────────────────────
-function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();}
+function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();renderNotes();}
+
+// ── NOTES ─────────────────────────────────────────────────
+let notes=[];
+let currentNoteFilter='all';
+let editingNoteId=null;
+
+function openNoteForm(id){
+  editingNoteId=id||null;
+  const form=document.getElementById('note-form-wrap');
+  const titleEl=document.getElementById('note-form-title');
+  if(id){
+    const n=notes.find(n=>n.id===id);
+    if(!n)return;
+    document.getElementById('note-title-input').value=n.title;
+    document.getElementById('note-content-input').value=n.content;
+    titleEl.textContent='✏ Edit Note';
+    // Set category
+    document.querySelectorAll('.note-cat-btn').forEach(b=>{
+      b.classList.toggle('active',b.dataset.cat===n.category);
+    });
+  }else{
+    document.getElementById('note-title-input').value='';
+    document.getElementById('note-content-input').value='';
+    titleEl.textContent='＋ New Note';
+    document.querySelectorAll('.note-cat-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  }
+  form.style.display='block';
+  document.getElementById('note-title-input').focus();
+}
+
+function closeNoteForm(){
+  document.getElementById('note-form-wrap').style.display='none';
+  editingNoteId=null;
+}
+
+function selectNoteCategory(btn){
+  document.querySelectorAll('.note-cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setNoteFilter(val,btn){
+  currentNoteFilter=val;
+  document.querySelectorAll('#note-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNotes();
+}
+
+async function saveNote(){
+  const title=document.getElementById('note-title-input').value.trim();
+  const content=document.getElementById('note-content-input').value.trim();
+  const catBtn=document.querySelector('.note-cat-btn.active');
+  const category=catBtn?catBtn.dataset.cat:'Insight';
+  if(!title&&!content){showToast('Add a title or content','error');return;}
+  const entry={
+    id:editingNoteId||uid(),
+    title:title||'Untitled',
+    content,
+    category,
+    createdAt:editingNoteId?(notes.find(n=>n.id===editingNoteId)?.createdAt||new Date().toISOString()):new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  if(editingNoteId){
+    const idx=notes.findIndex(n=>n.id===editingNoteId);
+    if(idx!==-1)notes[idx]=entry;
+  }else{
+    notes.unshift(entry);
+  }
+  closeNoteForm();
+  renderNotes();
+  await saveData('Save note');
+  showToast('✅ Note saved!','success');
+}
+
+async function deleteNote(id){
+  if(!confirm('Delete this note?'))return;
+  notes=notes.filter(n=>n.id!==id);
+  renderNotes();
+  await saveData('Delete note');
+  showToast('🗑 Note deleted');
+}
+
+function renderNotes(){
+  const listEl=document.getElementById('notes-list');
+  if(!listEl)return;
+  const filtered=notes.filter(n=>currentNoteFilter==='all'||n.category===currentNoteFilter);
+  if(!filtered.length){
+    listEl.innerHTML=`<div class="notes-empty"><div class="icon">📝</div><h3>No notes yet</h3><p>Click <strong>New Note</strong> to log your first trading insight or observation.</p></div>`;
+    return;
+  }
+  const CAT_ICONS={Insight:'💡',Pattern:'📈',Mistake:'⚠️',Rule:'📏',Psychology:'🧠',Other:'📌'};
+  listEl.innerHTML=filtered.map(n=>`
+    <div class="note-card cat-${esc(n.category)}">
+      <div class="note-card-top">
+        <div class="note-card-title">${esc(n.title)}</div>
+        <div class="note-card-actions">
+          <span class="note-cat-tag ${esc(n.category)}">${CAT_ICONS[n.category]||'📌'} ${esc(n.category)}</span>
+          <button class="exp-btn-del" onclick="openNoteForm('${n.id}')" title="Edit">✏</button>
+          <button class="exp-btn-del" onclick="deleteNote('${n.id}')" title="Delete">🗑</button>
+        </div>
+      </div>
+      ${n.content?`<div class="note-card-content">${esc(n.content).replace(/\n/g,'<br>')}</div>`:''}
+      <div class="note-card-footer">
+        <span class="note-card-date">${fmtDate(n.createdAt?.split('T')[0])}${n.updatedAt!==n.createdAt?' · edited':''}</span>
+      </div>
+    </div>`).join('');
+}
 
 function renderStats(){
   const total=trades.length,wins=trades.filter(t=>t.result==='W').length;
