@@ -492,43 +492,60 @@ function allAccounts(){return[...PRESET_ACCOUNTS,...extraAccounts.filter(a=>!PRE
 
 // ── INIT ──────────────────────────────────────────────────
 async function initApp(){
-  const token=document.getElementById('setup-token').value.trim();
-  const repo=document.getElementById('setup-repo').value.trim();
-  const errEl=document.getElementById('setup-error');
-  if(location.protocol==='file:'){
-    errEl.innerHTML=`<strong>⚠ Cannot run from a local file.</strong><br><br>
-      <b>Option 1 — GitHub Pages:</b> Create a public repo, upload index.html, enable Pages in Settings.<br><br>
-      <b>Option 2 — VS Code Live Server:</b> Install Live Server extension → Open with Live Server.`;
-    errEl.style.display='block';return;
+  const token = document.getElementById('setup-token').value.trim();
+  const repo = document.getElementById('setup-repo').value.trim();
+  const errEl = document.getElementById('setup-error');
+
+  // Check if running as local file
+  if(location.protocol === 'file:'){
+    errEl.innerHTML = `<strong>⚠ Cannot run from a local file.</strong><br><br>
+      Please host this via <b>GitHub Pages</b> or use <b>VS Code Live Server</b> to allow the browser to talk to the GitHub API.`;
+    errEl.style.display = 'block';
+    return;
   }
-  if(!token||!repo){errEl.textContent='Token and repository are required.';errEl.style.display='block';return;}
-  if(!repo.includes('/')){errEl.textContent='Repository must be owner/repo format';errEl.style.display='block';return;}
-  errEl.style.display='none';
-  CONFIG={token,repo};
-  setSyncState('syncing','connecting…');
-  try{
+
+  if(!token || !repo || !repo.includes('/')){
+    errEl.textContent = 'Token and repository (owner/repo) are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Set CONFIG globally so all other functions (ghFetch, etc.) can see it
+  CONFIG = { token, repo };
+  errEl.style.display = 'none';
+  setSyncState('syncing', 'connecting...');
+
+  try {
+    // 1. Validate connection & permissions
     await ensureRepo();
+    
+    // 2. Load the actual trade data
     await loadData();
-    localStorage.setItem('tj_token',token);
-    localStorage.setItem('tj_repo',repo);
-    document.getElementById('setup-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('header-repo').textContent=repo;
-    const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
-    evalCalYear=n.getFullYear();evalCalMonth=n.getMonth();
+
+    // 3. If successful, save to local storage for auto-login next time
+    localStorage.setItem('tj_token', token);
+    localStorage.setItem('tj_repo', repo);
+
+    // 4. UI Transition
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('header-repo').textContent = repo;
+
+    const n = new Date();
+    calYear = n.getFullYear();
+    calMonth = n.getMonth();
+    evalCalYear = n.getFullYear();
+    evalCalMonth = n.getMonth();
+
     renderAll();
-    setSyncState('synced','synced');
-  }catch(e){
-    errEl.textContent='Error: '+(e.message||'Check token and repo name.');
-    errEl.style.display='block';setSyncState('error','error');
+    setSyncState('synced', 'synced');
+  } catch (e) {
+    console.error("Login Error:", e);
+    errEl.textContent = 'Error: ' + (e.message || 'Check your token permissions and repo name.');
+    errEl.style.display = 'block';
+    setSyncState('error', 'error');
   }
 }
-
-window.addEventListener('DOMContentLoaded',()=>{
-  if(location.protocol==='file:')document.getElementById('file-protocol-banner').style.display='block';
-  const t=localStorage.getItem('tj_token'),r=localStorage.getItem('tj_repo');
-  if(t&&r){document.getElementById('setup-token').value=t;document.getElementById('setup-repo').value=r;initApp();}
-});
 
 // ── GITHUB API ────────────────────────────────────────────
 async function ghFetch(path,method='GET',body=null){
