@@ -189,24 +189,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .stat-value{font-family:var(--mono);font-size:16px;color:var(--text);}
 .stat-value.positive{color:var(--win);}.stat-value.negative{color:var(--loss);}.stat-value.payout{color:var(--payout);}
 
-/* Tabs */
-.tab-nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;overflow-x:auto;align-items:stretch;}
-.tab-page{display:none;}.tab-page.active{display:block;}
-
-/* ── Grouped Tab Nav ── */
-.tab-nav{align-items:stretch;gap:0;}
-.tab-group{position:relative;display:flex;align-items:stretch;}
-.tab-group-btn{display:flex;align-items:center;gap:5px;padding:11px 16px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:.3px;}
+/* Tabs - two row layout */
+.tab-nav{display:flex;flex-direction:column;background:var(--surface);border-bottom:1px solid var(--border);}
+.tab-nav-groups{display:flex;padding:0 28px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab-group-btn{padding:10px 20px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;margin-bottom:-1px;}
 .tab-group-btn:hover{color:var(--text);}
 .tab-group-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.tab-group-arrow{font-size:9px;opacity:.6;transition:transform .2s;}
-.tab-group.open .tab-group-arrow{transform:rotate(180deg);}
-.tab-group-dropdown{position:absolute;top:100%;left:0;background:var(--surface2);border:1px solid var(--border2);border-radius:0 8px 8px 8px;min-width:170px;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;}
-.tab-group.open .tab-group-dropdown{display:block;}
-.tab-sub-btn{display:block;width:100%;text-align:left;padding:10px 16px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;border-bottom:1px solid var(--border);}
-.tab-sub-btn:last-child{border-bottom:none;}
-.tab-sub-btn:hover{background:var(--border2);color:var(--text);}
-.tab-sub-btn.active{color:var(--accent);background:rgba(0,229,160,.06);font-weight:600;}
+.tab-nav-subs{display:flex;padding:0 28px;overflow-x:auto;background:var(--bg);}
+.tab-sub-row{display:none;}
+.tab-sub-row.active{display:flex;}
+.tab-sub-btn{padding:7px 16px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:11px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;margin-bottom:-1px;}
+.tab-sub-btn:hover{color:var(--text);}
+.tab-sub-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-page{display:none;}.tab-page.active{display:block;}
 
 /* List layout */
 .main-layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 164px);}
@@ -470,7 +465,10 @@ select option{background:#111318;}
   /* ── Tab nav — scrollable, no wrap ── */
   .tab-nav{padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .tab-nav::-webkit-scrollbar{display:none;}
-  .tab-group-btn{padding:11px 12px;font-size:11px;white-space:nowrap;flex-shrink:0;}
+  .tab-nav-groups{padding:0 8px;}
+  .tab-nav-subs{padding:0 8px;}
+  .tab-group-btn{padding:10px 12px;font-size:11px;}
+  .tab-sub-btn{padding:6px 12px;font-size:10px;}
 
   /* ── Trade list panel ── */
   .trade-list-panel{padding:14px 14px;}
@@ -546,7 +544,8 @@ select option{background:#111318;}
   .stat-label{font-size:8px;letter-spacing:1px;}
 
   /* ── Tab nav ── */
-  .tab-group-btn{padding:10px 11px;font-size:10px;}
+  .tab-group-btn{padding:9px 10px;font-size:10px;}
+  .tab-sub-btn{padding:6px 10px;font-size:10px;}
 
   /* ── Trade list ── */
   .trade-list-panel{padding:12px 12px 80px;} /* bottom padding so FAB doesn't cover last card */
@@ -719,32 +718,24 @@ select option{background:#111318;}
   </div>
 
   <div class="tab-nav">
-    <!-- Group: Funded Trades -->
-    <div class="tab-group" id="tabgroup-funded">
-      <button class="tab-group-btn active" id="tabgroup-btn-funded" onclick="toggleTabGroup('funded',event)">
-        📋 Funded Trades <span class="tab-group-arrow">▾</span>
-      </button>
-      <div class="tab-group-dropdown" id="tabgroup-dropdown-funded" onclick="event.stopPropagation()">
+    <div class="tab-nav-groups">
+      <button class="tab-group-btn active" id="tabgroup-btn-funded" onclick="switchGroup('funded')">📋 Funded Trades</button>
+      <button class="tab-group-btn" id="tabgroup-btn-eval" onclick="switchGroup('eval')">🎯 Evaluation</button>
+      <button class="tab-group-btn" id="tabgroup-btn-analysis" onclick="switchGroup('analysis')">📊 Analysis</button>
+    </div>
+    <div class="tab-nav-subs">
+      <!-- Funded sub-tabs -->
+      <div class="tab-sub-row active" id="tabsubs-funded">
         <button class="tab-sub-btn active" id="tab-btn-list" onclick="switchTab('list')">📋 Trade Log</button>
         <button class="tab-sub-btn" id="tab-btn-calendar" onclick="switchTab('calendar')">📅 Calendar</button>
       </div>
-    </div>
-    <!-- Group: Evaluation -->
-    <div class="tab-group" id="tabgroup-eval">
-      <button class="tab-group-btn" id="tabgroup-btn-eval" onclick="toggleTabGroup('eval',event)">
-        🎯 Evaluation <span class="tab-group-arrow">▾</span>
-      </button>
-      <div class="tab-group-dropdown" id="tabgroup-dropdown-eval" onclick="event.stopPropagation()">
+      <!-- Eval sub-tabs -->
+      <div class="tab-sub-row" id="tabsubs-eval">
         <button class="tab-sub-btn" id="tab-btn-evaljournal" onclick="switchTab('evaljournal')">🎯 Eval Journal</button>
         <button class="tab-sub-btn" id="tab-btn-evalcalendar" onclick="switchTab('evalcalendar')">🗓 Eval Calendar</button>
       </div>
-    </div>
-    <!-- Group: Analysis -->
-    <div class="tab-group" id="tabgroup-analysis">
-      <button class="tab-group-btn" id="tabgroup-btn-analysis" onclick="toggleTabGroup('analysis',event)">
-        📊 Analysis <span class="tab-group-arrow">▾</span>
-      </button>
-      <div class="tab-group-dropdown" id="tabgroup-dropdown-analysis" onclick="event.stopPropagation()">
+      <!-- Analysis sub-tabs -->
+      <div class="tab-sub-row" id="tabsubs-analysis">
         <button class="tab-sub-btn" id="tab-btn-expectancy" onclick="switchTab('expectancy')">📊 Expectancy</button>
         <button class="tab-sub-btn" id="tab-btn-breakdown" onclick="switchTab('breakdown')">📆 P&amp;L Breakdown</button>
         <button class="tab-sub-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
@@ -1169,6 +1160,16 @@ const TAB_GROUPS={
   expectancy:'analysis', breakdown:'analysis', expenses:'analysis'
 };
 
+function switchGroup(grp){
+  document.querySelectorAll('.tab-group-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-sub-row').forEach(r=>r.classList.remove('active'));
+  document.getElementById('tabgroup-btn-'+grp).classList.add('active');
+  document.getElementById('tabsubs-'+grp).classList.add('active');
+  // Auto-activate the first sub-tab of the group
+  const firstBtn=document.querySelector('#tabsubs-'+grp+' .tab-sub-btn');
+  if(firstBtn) firstBtn.click();
+}
+
 function switchTab(name){
   document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-sub-btn').forEach(b=>b.classList.remove('active'));
@@ -1178,11 +1179,10 @@ function switchTab(name){
   if(subBtn) subBtn.classList.add('active');
   const grp=TAB_GROUPS[name];
   if(grp){
-    const grpBtn=document.getElementById('tabgroup-btn-'+grp);
-    if(grpBtn) grpBtn.classList.add('active');
+    document.getElementById('tabgroup-btn-'+grp)?.classList.add('active');
+    document.querySelectorAll('.tab-sub-row').forEach(r=>r.classList.remove('active'));
+    document.getElementById('tabsubs-'+grp)?.classList.add('active');
   }
-  // Close dropdown after a tiny delay so click registers first
-  setTimeout(closeTabGroups, 50);
   if(name==='calendar')renderCalendar('live');
   if(name==='evalcalendar')renderCalendar('eval');
   if(name==='evaljournal'){renderEvalAccountFilters();renderTrades('eval');}
@@ -1190,23 +1190,6 @@ function switchTab(name){
   if(name==='breakdown')renderBreakdown();
   if(name==='expenses')renderFinances();
 }
-
-function toggleTabGroup(grp,e){
-  e.stopPropagation();
-  const el=document.getElementById('tabgroup-'+grp);
-  const isOpen=el.classList.contains('open');
-  document.querySelectorAll('.tab-group').forEach(g=>g.classList.remove('open'));
-  if(!isOpen) el.classList.add('open');
-}
-
-function closeTabGroups(){
-  document.querySelectorAll('.tab-group').forEach(g=>g.classList.remove('open'));
-}
-
-// Close dropdowns when clicking outside
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.tab-group')) closeTabGroups();
-});
 
 // ── RENDER ALL ────────────────────────────────────────────
 function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();}
