@@ -472,6 +472,45 @@ select option{background:#111318;}
 .notes-empty h3{font-size:14px;color:var(--text2);margin-bottom:5px;}
 .notes-empty p{font-size:12px;line-height:1.6;}
 
+/* ── Session Performance Tab ── */
+.session-page{padding:20px 28px;}
+.session-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.session-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.session-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.session-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.session-card.london::before{background:#38bdf8;}
+.session-card.new-york::before{background:#f59e0b;}
+.session-card.asian::before{background:#a78bfa;}
+.session-card.overnight::before{background:var(--text3);}
+.session-card-name{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.session-card-name .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-london{background:#38bdf8;}
+.dot-new-york{background:#f59e0b;}
+.dot-asian{background:#a78bfa;}
+.dot-overnight{background:var(--text3);}
+.session-card-wr{font-family:var(--mono);font-size:26px;font-weight:700;margin-bottom:4px;}
+.session-card-wr.high{color:var(--win);}
+.session-card-wr.mid{color:#f59e0b;}
+.session-card-wr.low{color:var(--loss);}
+.session-card-wr.none{color:var(--text3);}
+.session-card-sub{font-size:11px;color:var(--text2);margin-bottom:10px;}
+.session-card-pnl{font-family:var(--mono);font-size:13px;font-weight:600;}
+.session-card-pnl.positive{color:var(--win);}
+.session-card-pnl.negative{color:var(--loss);}
+.session-card-stats{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+.session-mini-stat{font-size:10px;color:var(--text3);}
+.session-mini-stat span{color:var(--text2);font-family:var(--mono);}
+/* Day of week grid */
+.dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px;}
+.dow-cell{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;}
+.dow-cell-day{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.dow-cell-wr{font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:3px;}
+.dow-cell-trades{font-size:10px;color:var(--text3);}
+.dow-cell-pnl{font-family:var(--mono);font-size:10px;margin-top:4px;}
+.dow-cell.best-day{border-color:var(--win);background:rgba(34,197,94,.06);}
+.dow-cell.worst-day{border-color:var(--loss);background:rgba(239,68,68,.06);}
+.dow-cell.no-trades{opacity:.3;}
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE — tablet (≤900px) + portrait
 ═══════════════════════════════════════════════════════════ */
@@ -501,6 +540,8 @@ select option{background:#111318;}
   .tab-nav-subs{padding:0 8px;}
   .tab-group-btn{padding:10px 12px;font-size:11px;}
   .tab-sub-btn{padding:6px 12px;font-size:10px;}
+  .session-cards{grid-template-columns:repeat(2,1fr);}
+  .dow-grid{grid-template-columns:repeat(4,1fr);}
 
   /* ── Trade list panel ── */
   .trade-list-panel{padding:14px 14px;}
@@ -771,6 +812,7 @@ select option{background:#111318;}
         <button class="tab-sub-btn" id="tab-btn-expectancy" onclick="switchTab('expectancy')">📊 Expectancy</button>
         <button class="tab-sub-btn" id="tab-btn-breakdown" onclick="switchTab('breakdown')">📆 P&amp;L Breakdown</button>
         <button class="tab-sub-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
+        <button class="tab-sub-btn" id="tab-btn-session" onclick="switchTab('session')">🕐 Session Performance</button>
         <button class="tab-sub-btn" id="tab-btn-notes" onclick="switchTab('notes')">📝 Notes</button>
       </div>
     </div>
@@ -1013,6 +1055,55 @@ select option{background:#111318;}
       <div id="notes-list"></div>
     </div>
   </div>
+
+  <!-- ── SESSION PERFORMANCE TAB ── -->
+  <div class="tab-page" id="tab-session">
+    <div class="session-page">
+      <div class="session-header">
+        <div>
+          <div class="panel-title" style="font-size:14px;">🕐 Session Performance</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">How you perform across London, New York and Asian sessions</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="session-source-filter" class="filter-select" onchange="renderSession()" style="font-size:11px;">
+            <option value="live">Funded Trades</option>
+            <option value="eval">Eval Trades</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Session summary cards -->
+      <div class="session-cards" id="session-cards"></div>
+
+      <!-- Day of week heatmap -->
+      <div class="section-title" style="margin-top:6px;">📅 Day of Week Performance <span></span></div>
+      <div class="dow-grid" id="dow-grid"></div>
+
+      <!-- Session detail table -->
+      <div class="section-title" style="margin-top:20px;">📋 Trade Breakdown by Session <span></span></div>
+      <div class="exp-table-wrap">
+        <table class="exp-table">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Trades</th>
+              <th>Wins</th>
+              <th>Losses</th>
+              <th>Win Rate</th>
+              <th>Total P&amp;L</th>
+              <th>Avg P&amp;L</th>
+              <th>Avg RR</th>
+              <th>Best</th>
+              <th>Worst</th>
+            </tr>
+          </thead>
+          <tbody id="session-tbody"></tbody>
+        </table>
+        <div class="exp-empty" id="session-empty" style="display:none;">No trades with session data yet. Add a session when logging trades.</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Bottom sheet backdrop (mobile) -->
@@ -1249,7 +1340,7 @@ async function saveData(msg='Update'){
 const TAB_GROUPS={
   list:'funded', calendar:'funded',
   evaljournal:'eval', evalcalendar:'eval',
-  expectancy:'analysis', breakdown:'analysis', expenses:'analysis', notes:'analysis'
+  expectancy:'analysis', breakdown:'analysis', expenses:'analysis', notes:'analysis', session:'analysis'
 };
 
 function switchGroup(grp){
@@ -1282,6 +1373,7 @@ function switchTab(name){
   if(name==='breakdown')renderBreakdown();
   if(name==='expenses')renderFinances();
   if(name==='notes')renderNotes();
+  if(name==='session')renderSession();
 }
 
 // ── RENDER ALL ────────────────────────────────────────────
@@ -1391,6 +1483,118 @@ function renderNotes(){
         <span class="note-card-date">${fmtDate(n.createdAt?.split('T')[0])}${n.updatedAt!==n.createdAt?' · edited':''}</span>
       </div>
     </div>`).join('');
+}
+
+// ── SESSION PERFORMANCE ───────────────────────────────────
+function renderSession(){
+  const src=document.getElementById('session-source-filter')?.value||'live';
+  let pool=[];
+  if(src==='live'||src==='both') pool=[...pool,...trades];
+  if(src==='eval'||src==='both') pool=[...pool,...evalTrades];
+
+  const SESSIONS=[
+    {key:'London',    label:'London',    emoji:'🇬🇧', cls:'london',    dot:'dot-london',    time:'02:00–05:00 ET'},
+    {key:'New York',  label:'New York',  emoji:'🗽', cls:'new-york',  dot:'dot-new-york',  time:'09:30–12:00 ET'},
+    {key:'Asian',     label:'Asian',     emoji:'🌏', cls:'asian',     dot:'dot-asian',     time:'20:00–00:00 ET'},
+    {key:'Overnight', label:'Overnight', emoji:'🌙', cls:'overnight', dot:'dot-overnight', time:'Other hours'},
+  ];
+
+  // Build per-session stats
+  function sessionStats(key){
+    const t=pool.filter(tr=>tr.session===key);
+    const wins=t.filter(tr=>tr.result==='W').length;
+    const losses=t.filter(tr=>tr.result==='L').length;
+    const decided=wins+losses;
+    const wr=decided?Math.round(wins/decided*100):null;
+    const pnl=t.reduce((s,tr)=>s+(parseFloat(tr.pnl)*(parseInt(tr.copies)||1)||0),0);
+    const avgPnl=t.length?pnl/t.length:0;
+    const rrs=t.map(tr=>parseFloat(tr.rr)).filter(Boolean);
+    const avgRR=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2):'—';
+    const pnls=t.map(tr=>parseFloat(tr.pnl)*(parseInt(tr.copies)||1)||0);
+    const best=pnls.length?Math.max(...pnls):null;
+    const worst=pnls.length?Math.min(...pnls):null;
+    return{t,wins,losses,decided,wr,pnl,avgPnl,avgRR,best,worst};
+  }
+
+  // Render summary cards
+  const cardsEl=document.getElementById('session-cards');
+  cardsEl.innerHTML=SESSIONS.map(s=>{
+    const st=sessionStats(s.key);
+    const wrClass=st.wr===null?'none':st.wr>=60?'high':st.wr>=45?'mid':'low';
+    const wrLabel=st.wr===null?'—':st.wr+'%';
+    const pnlClass=st.pnl>=0?'positive':'negative';
+    const pnlLabel=st.pnl===0&&!st.t.length?'—':(st.pnl>=0?'+':'')+st.pnl.toFixed(2);
+    return`<div class="session-card ${s.cls}">
+      <div class="session-card-name"><span class="dot ${s.dot}"></span>${s.emoji} ${s.label}</div>
+      <div class="session-card-wr ${wrClass}">${wrLabel}</div>
+      <div class="session-card-sub">${st.t.length} trade${st.t.length!==1?'s':''} · ${s.time}</div>
+      <div class="session-card-pnl ${pnlClass}">$${pnlLabel}</div>
+      <div class="session-card-stats">
+        <div class="session-mini-stat">Avg RR <span>${st.avgRR}</span></div>
+        <div class="session-mini-stat">Avg P&L <span>${st.t.length?'$'+(st.avgPnl>=0?'+':'')+st.avgPnl.toFixed(2):'—'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Render detail table
+  const tbody=document.getElementById('session-tbody');
+  const emptyEl=document.getElementById('session-empty');
+  const hasSessions=pool.some(t=>t.session);
+  if(!hasSessions){
+    tbody.innerHTML='';
+    emptyEl.style.display='block';
+  }else{
+    emptyEl.style.display='none';
+    tbody.innerHTML=SESSIONS.map(s=>{
+      const st=sessionStats(s.key);
+      if(!st.t.length) return`<tr><td>${s.emoji} ${s.label}</td><td colspan="9" style="color:var(--text3);font-size:11px;">No trades</td></tr>`;
+      const wrClass=st.wr===null?'':st.wr>=60?'positive':st.wr>=45?'':'negative';
+      const pnlClass=st.pnl>=0?'positive':'negative';
+      return`<tr>
+        <td><strong>${s.emoji} ${s.label}</strong></td>
+        <td style="font-family:var(--mono)">${st.t.length}</td>
+        <td style="color:var(--win);font-family:var(--mono)">${st.wins}</td>
+        <td style="color:var(--loss);font-family:var(--mono)">${st.losses}</td>
+        <td class="${wrClass}" style="font-family:var(--mono);font-weight:600">${st.wr!==null?st.wr+'%':'—'}</td>
+        <td class="${pnlClass}" style="font-family:var(--mono);font-weight:600">$${st.pnl>=0?'+':''}${st.pnl.toFixed(2)}</td>
+        <td style="font-family:var(--mono);color:var(--text2)">$${st.avgPnl>=0?'+':''}${st.avgPnl.toFixed(2)}</td>
+        <td style="font-family:var(--mono);color:var(--text2)">${st.avgRR}</td>
+        <td style="font-family:var(--mono);color:var(--win)">${st.best!==null?'$+'+st.best.toFixed(2):'—'}</td>
+        <td style="font-family:var(--mono);color:var(--loss)">${st.worst!==null?'$'+st.worst.toFixed(2):'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Render day of week grid
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowStats=DAYS.map((d,i)=>{
+    const t=pool.filter(tr=>{
+      if(!tr.date)return false;
+      return new Date(tr.date+'T12:00:00').getDay()===i;
+    });
+    const wins=t.filter(tr=>tr.result==='W').length;
+    const decided=t.filter(tr=>tr.result!=='BE').length;
+    const wr=decided?Math.round(wins/decided*100):null;
+    const pnl=t.reduce((s,tr)=>s+(parseFloat(tr.pnl)*(parseInt(tr.copies)||1)||0),0);
+    return{d,i,t,wins,wr,pnl};
+  });
+  const pnls=dowStats.filter(d=>d.t.length).map(d=>d.pnl);
+  const bestPnl=pnls.length?Math.max(...pnls):-Infinity;
+  const worstPnl=pnls.length?Math.min(...pnls):Infinity;
+  const dowEl=document.getElementById('dow-grid');
+  dowEl.innerHTML=dowStats.map(d=>{
+    const isBest=d.t.length&&d.pnl===bestPnl;
+    const isWorst=d.t.length&&d.pnl===worstPnl&&bestPnl!==worstPnl;
+    const wrClass=d.wr===null?'none':d.wr>=60?'high':d.wr>=45?'mid':'low';
+    const wrColors={high:'var(--win)',mid:'#f59e0b',low:'var(--loss)',none:'var(--text3)'};
+    const pnlClass=d.pnl>=0?'positive':'negative';
+    return`<div class="dow-cell${!d.t.length?' no-trades':''}${isBest?' best-day':''}${isWorst?' worst-day':''}">
+      <div class="dow-cell-day">${d.d}</div>
+      <div class="dow-cell-wr" style="color:${wrColors[wrClass]}">${d.wr!==null?d.wr+'%':'—'}</div>
+      <div class="dow-cell-trades">${d.t.length} trade${d.t.length!==1?'s':''}</div>
+      ${d.t.length?`<div class="dow-cell-pnl ${pnlClass}">$${d.pnl>=0?'+':''}${d.pnl.toFixed(0)}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
 function renderStats(){
