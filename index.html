@@ -2798,54 +2798,38 @@ async function triggerInstall(){
   hideInstallButton();
 }
 
-// ── SYNC THEME COLOR WITH PWA CHROME ─────────────────────
-// Update the browser/PWA chrome color when theme changes
-const _origApplyTheme=applyTheme;
-// Wrap applyTheme to also update <meta name="theme-color">
-(function(){
-  const THEME_COLORS={
-    void:'#0a0c0f', midnight:'#060b14', ember:'#0f0b08',
-    aurora:'#080610', zinc:'#0d0d0d', slate:'#0a0e14',
-    rose:'#0f080a', forest:'#060e08', ocean:'#040e12',
-    light:'#f8fafc'
-  };
-  const origFn=applyTheme;
-  window.applyTheme=function(name){
-    origFn(name);
-    const meta=document.getElementById('pwa-theme-color');
-    if(meta) meta.content=THEME_COLORS[name]||'#0a0c0f';
-  };
-})();
-
+// ── THEMES ────────────────────────────────────────────────
 const THEMES={
-  void:    {label:'Void',    accentColor:'#00e5a0'},
-  midnight:{label:'Midnight',accentColor:'#38bdf8'},
-  ember:   {label:'Ember',   accentColor:'#f59e0b'},
-  aurora:  {label:'Aurora',  accentColor:'#e879f9'},
-  zinc:    {label:'Zinc',    accentColor:'#e4e4e7'},
-  slate:   {label:'Slate',   accentColor:'#22d3ee'},
-  rose:    {label:'Rose',    accentColor:'#fb7185'},
-  forest:  {label:'Forest',  accentColor:'#86efac'},
-  ocean:   {label:'Ocean',   accentColor:'#2dd4bf'},
-  light:   {label:'Light',   accentColor:'#2563eb'},
+  void:    {label:'Void',    accentColor:'#00e5a0', themeColor:'#0a0c0f'},
+  midnight:{label:'Midnight',accentColor:'#38bdf8', themeColor:'#060b14'},
+  ember:   {label:'Ember',   accentColor:'#f59e0b', themeColor:'#0f0b08'},
+  aurora:  {label:'Aurora',  accentColor:'#e879f9', themeColor:'#080610'},
+  zinc:    {label:'Zinc',    accentColor:'#e4e4e7', themeColor:'#0d0d0d'},
+  slate:   {label:'Slate',   accentColor:'#22d3ee', themeColor:'#0a0e14'},
+  rose:    {label:'Rose',    accentColor:'#fb7185', themeColor:'#0f080a'},
+  forest:  {label:'Forest',  accentColor:'#86efac', themeColor:'#060e08'},
+  ocean:   {label:'Ocean',   accentColor:'#2dd4bf', themeColor:'#040e12'},
+  light:   {label:'Light',   accentColor:'#2563eb', themeColor:'#f8fafc'},
 };
 
 function applyTheme(name){
+  if(!THEMES[name]) name='void';
   const root=document.documentElement;
-  // Remove old theme
-  Object.keys(THEMES).forEach(t=>root.removeAttribute('data-theme'));
+  Object.keys(THEMES).forEach(()=>root.removeAttribute('data-theme'));
   if(name!=='void') root.setAttribute('data-theme',name);
-  // Update button swatch dynamically
-  document.querySelector('.theme-picker-btn .swatch').style.background=THEMES[name].accentColor;
-  document.getElementById('theme-label').textContent=THEMES[name].label;
-  // Update active state in dropdown
+  const swatchEl=document.querySelector('.theme-picker-btn .swatch');
+  if(swatchEl) swatchEl.style.background=THEMES[name].accentColor;
+  const labelEl=document.getElementById('theme-label');
+  if(labelEl) labelEl.textContent=THEMES[name].label;
   document.querySelectorAll('.theme-option').forEach(el=>{
     el.classList.toggle('active',el.dataset.theme===name);
   });
-  // Persist
   localStorage.setItem('tj_theme',name);
-  // Close dropdown
-  document.getElementById('theme-dropdown').classList.remove('open');
+  const dropdown=document.getElementById('theme-dropdown');
+  if(dropdown) dropdown.classList.remove('open');
+  // Sync PWA chrome color
+  const meta=document.getElementById('pwa-theme-color');
+  if(meta) meta.content=THEMES[name].themeColor;
   // Re-render expectancy chart if visible (uses canvas colors)
   if(document.getElementById('tab-expectancy')?.classList.contains('active')){
     renderExpectancyChart();
