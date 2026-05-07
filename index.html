@@ -204,7 +204,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .tab-page{display:none;}.tab-page.active{display:block;}
 
 /* List layout */
-.main-layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 164px);}
+.main-layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 200px);}
 .trade-list-panel{border-right:1px solid var(--border);padding:20px 24px;}
 .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .panel-title{font-size:13px;font-weight:600;}
@@ -242,7 +242,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .dir-tag.SHORT{background:rgba(167,139,250,.12);color:var(--payout);}
 
 /* Right panel / form */
-.right-panel{background:var(--surface);padding:20px;overflow-y:auto;max-height:calc(100vh - 164px);position:sticky;top:164px;}
+.right-panel{background:var(--surface);padding:20px;overflow-y:auto;max-height:calc(100vh - 200px);position:sticky;top:200px;}
 .form-title{font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
 .form-group{margin-bottom:13px;}
 .form-group label{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;}
@@ -510,6 +510,38 @@ select option{background:#111318;}
 .dow-cell.best-day{border-color:var(--win);background:rgba(34,197,94,.06);}
 .dow-cell.worst-day{border-color:var(--loss);background:rgba(239,68,68,.06);}
 .dow-cell.no-trades{opacity:.3;}
+
+/* ── Trade Breakdowns Tab ── */
+.tbd-page{padding:20px 28px;}
+.tbd-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.tbd-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden;transition:border-color .2s;}
+.tbd-card:hover{border-color:var(--border2);}
+.tbd-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--result-win);}
+.tbd-card.loss::before{background:var(--result-loss);}
+.tbd-card.be::before{background:var(--result-be);}
+.tbd-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.tbd-asset{font-family:var(--mono);font-size:16px;font-weight:700;}
+.tbd-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.tbd-result-tag{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:4px;}
+.tbd-result-tag.W{background:rgba(34,197,94,.13);color:var(--result-win);}
+.tbd-result-tag.L{background:rgba(239,68,68,.13);color:var(--result-loss);}
+.tbd-result-tag.BE{background:rgba(249,115,22,.13);color:var(--result-be);}
+.tbd-session-tag{background:rgba(0,148,255,.1);color:var(--accent2);padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);}
+.tbd-actions{margin-left:auto;display:flex;gap:6px;}
+.tbd-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.tbd-link-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(0,148,255,.08);border:1px solid rgba(0,148,255,.2);color:var(--accent2);padding:4px 10px;border-radius:20px;font-size:11px;text-decoration:none;transition:background .2s;font-family:var(--sans);}
+.tbd-link-pill:hover{background:rgba(0,148,255,.18);}
+.tbd-link-pill .link-num{font-family:var(--mono);font-size:10px;opacity:.7;}
+.tbd-notes-text{font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;background:var(--bg);border-radius:6px;padding:10px 12px;}
+.tbd-link-input-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
+.tbd-link-input-row input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;}
+.tbd-link-input-row input:focus{border-color:var(--accent);}
+.tbd-link-label{width:110px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;}
+.tbd-link-label:focus{border-color:var(--accent);}
+.tbd-empty{text-align:center;padding:56px 20px;color:var(--text3);}
+.tbd-empty .icon{font-size:36px;margin-bottom:10px;}
+.tbd-empty h3{font-size:14px;color:var(--text2);margin-bottom:5px;}
+.tbd-empty p{font-size:12px;line-height:1.6;}
 
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE — tablet (≤900px) + portrait
@@ -813,6 +845,7 @@ select option{background:#111318;}
         <button class="tab-sub-btn" id="tab-btn-breakdown" onclick="switchTab('breakdown')">📆 P&amp;L Breakdown</button>
         <button class="tab-sub-btn" id="tab-btn-expenses" onclick="switchTab('expenses')">💸 Finance</button>
         <button class="tab-sub-btn" id="tab-btn-session" onclick="switchTab('session')">🕐 Session Performance</button>
+        <button class="tab-sub-btn" id="tab-btn-tradebreakdown" onclick="switchTab('tradebreakdown')">🔍 Trade Breakdowns</button>
         <button class="tab-sub-btn" id="tab-btn-notes" onclick="switchTab('notes')">📝 Notes</button>
       </div>
     </div>
@@ -1104,6 +1137,88 @@ select option{background:#111318;}
       </div>
     </div>
   </div>
+
+  <!-- ── TRADE BREAKDOWNS TAB ── -->
+  <div class="tab-page" id="tab-tradebreakdown">
+    <div class="tbd-page">
+      <div class="tbd-header">
+        <div>
+          <div class="panel-title" style="font-size:14px;">🔍 Trade Breakdowns</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">Detailed post-trade analysis with chart links</div>
+        </div>
+        <button class="btn-add" onclick="openTbdForm()">＋ Add Breakdown</button>
+      </div>
+
+      <!-- Form -->
+      <div id="tbd-form-wrap" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;" id="tbd-form-title">＋ New Breakdown</div>
+          <button class="icon-btn" onclick="closeTbdForm()" style="font-size:10px;padding:3px 7px;">✕</button>
+        </div>
+
+        <div class="form-row" style="margin-bottom:12px;">
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Date</label>
+            <input type="date" id="tbd-date" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Asset</label>
+            <input type="text" id="tbd-asset" placeholder="e.g. NQ, ES, GC…" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom:12px;">
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Result</label>
+            <div style="display:flex;">
+              <button class="result-btn W active" id="tbd-result-W" onclick="setTbdResult('W')">WIN</button>
+              <button class="result-btn L" id="tbd-result-L" onclick="setTbdResult('L')">LOSS</button>
+              <button class="result-btn BE" id="tbd-result-BE" onclick="setTbdResult('BE')">BE</button>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Session</label>
+            <select id="tbd-session" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+              <option value="">— Select —</option>
+              <option>London</option>
+              <option>New York</option>
+              <option>Asian</option>
+              <option>Overnight</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Chart links -->
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:8px;">Chart Links</label>
+          <div id="tbd-links-list"></div>
+          <button class="btn-edit" style="width:auto;padding:6px 14px;font-size:11px;margin-top:6px;" onclick="addTbdLink()">＋ Add Chart Link</button>
+        </div>
+
+        <!-- Notes -->
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Analysis Notes</label>
+          <textarea id="tbd-notes" placeholder="What did you see? What was the setup? What went right or wrong?" style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:vertical;line-height:1.6;"></textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn-save" style="margin:0;" onclick="saveTbd()">💾 Save Breakdown</button>
+          <button class="btn-edit" style="margin:0;flex:0 0 auto;width:auto;padding:8px 16px;" onclick="closeTbdForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filters" style="margin-bottom:16px;">
+        <button class="filter-btn active" onclick="setTbdFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setTbdFilter('W',this)">✅ Wins</button>
+        <button class="filter-btn" onclick="setTbdFilter('L',this)">❌ Losses</button>
+        <button class="filter-btn" onclick="setTbdFilter('BE',this)">➖ Break Even</button>
+      </div>
+
+      <!-- Cards list -->
+      <div id="tbd-list"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Bottom sheet backdrop (mobile) -->
@@ -1319,6 +1434,7 @@ async function loadData(){
     extraAccounts=data.accounts||[];
     customChecklist=data.customChecklist||[];
     notes=data.notes||[];
+    tradeBreakdowns=data.tradeBreakdowns||[];
     if(data.expenses&&!finances.length){
       finances=[
         ...data.expenses.map(e=>({...e,type:'expense'})),
@@ -1326,13 +1442,13 @@ async function loadData(){
       ];
     }
   }else{
-    trades=[];evalTrades=[];finances=[];extraAccounts=[];customChecklist=[];notes=[];
-    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes},'Init trading journal');
+    trades=[];evalTrades=[];finances=[];extraAccounts=[];customChecklist=[];notes=[];tradeBreakdowns=[];
+    await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes,tradeBreakdowns},'Init trading journal');
   }
 }
 async function saveData(msg='Update'){
   setSyncState('syncing','saving…');
-  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes},msg);setSyncState('synced','synced');}
+  try{await writeFile(DATA_PATH,{trades,evalTrades,finances,accounts:extraAccounts,customChecklist,notes,tradeBreakdowns},msg);setSyncState('synced','synced');}
   catch(e){setSyncState('error','save failed');showToast('❌ Save failed: '+e.message,'error');}
 }
 
@@ -1340,7 +1456,7 @@ async function saveData(msg='Update'){
 const TAB_GROUPS={
   list:'funded', calendar:'funded',
   evaljournal:'eval', evalcalendar:'eval',
-  expectancy:'analysis', breakdown:'analysis', expenses:'analysis', notes:'analysis', session:'analysis'
+  expectancy:'analysis', breakdown:'analysis', expenses:'analysis', notes:'analysis', session:'analysis', tradebreakdown:'analysis'
 };
 
 function switchGroup(grp){
@@ -1374,15 +1490,22 @@ function switchTab(name){
   if(name==='expenses')renderFinances();
   if(name==='notes')renderNotes();
   if(name==='session')renderSession();
+  if(name==='tradebreakdown')renderTbd();
 }
 
 // ── RENDER ALL ────────────────────────────────────────────
-function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();renderNotes();}
+function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();renderNotes();renderTbd();}
 
 // ── NOTES ─────────────────────────────────────────────────
 let notes=[];
 let currentNoteFilter='all';
 let editingNoteId=null;
+
+// ── TRADE BREAKDOWNS STATE ────────────────────────────────
+let tradeBreakdowns=[];
+let currentTbdFilter='all';
+let editingTbdId=null;
+let tbdLinks=[];
 
 function openNoteForm(id){
   editingNoteId=id||null;
@@ -1593,6 +1716,157 @@ function renderSession(){
       <div class="dow-cell-wr" style="color:${wrColors[wrClass]}">${d.wr!==null?d.wr+'%':'—'}</div>
       <div class="dow-cell-trades">${d.t.length} trade${d.t.length!==1?'s':''}</div>
       ${d.t.length?`<div class="dow-cell-pnl ${pnlClass}">$${d.pnl>=0?'+':''}${d.pnl.toFixed(0)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── TRADE BREAKDOWNS ──────────────────────────────────────
+function openTbdForm(id){
+  editingTbdId=id||null;
+  tbdLinks=[];
+  const wrap=document.getElementById('tbd-form-wrap');
+  const titleEl=document.getElementById('tbd-form-title');
+  const today=new Date().toISOString().split('T')[0];
+  if(id){
+    const b=tradeBreakdowns.find(b=>b.id===id);
+    if(!b)return;
+    document.getElementById('tbd-date').value=b.date||today;
+    document.getElementById('tbd-asset').value=b.asset||'';
+    document.getElementById('tbd-session').value=b.session||'';
+    document.getElementById('tbd-notes').value=b.notes||'';
+    tbdLinks=b.links?[...b.links]:[];
+    setTbdResult(b.result||'W');
+    titleEl.textContent='✏ Edit Breakdown';
+  }else{
+    document.getElementById('tbd-date').value=today;
+    document.getElementById('tbd-asset').value='';
+    document.getElementById('tbd-session').value='';
+    document.getElementById('tbd-notes').value='';
+    tbdLinks=[];
+    setTbdResult('W');
+    titleEl.textContent='＋ New Breakdown';
+  }
+  renderTbdLinks();
+  wrap.style.display='block';
+  document.getElementById('tbd-asset').focus();
+}
+
+function closeTbdForm(){
+  document.getElementById('tbd-form-wrap').style.display='none';
+  editingTbdId=null;
+  tbdLinks=[];
+}
+
+function setTbdResult(r){
+  ['W','L','BE'].forEach(v=>{
+    const btn=document.getElementById('tbd-result-'+v);
+    if(btn) btn.className='result-btn '+v+(r===v?' active':'');
+  });
+}
+
+function getTbdResult(){
+  return ['W','L','BE'].find(v=>document.getElementById('tbd-result-'+v)?.classList.contains('active'))||'W';
+}
+
+function addTbdLink(){
+  tbdLinks.push({label:'',url:''});
+  renderTbdLinks();
+}
+
+function removeTbdLink(i){
+  tbdLinks.splice(i,1);
+  renderTbdLinks();
+}
+
+function renderTbdLinks(){
+  const el=document.getElementById('tbd-links-list');
+  if(!el)return;
+  if(!tbdLinks.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:4px;">No chart links yet. Click below to add one.</div>';
+    return;
+  }
+  el.innerHTML=tbdLinks.map((l,i)=>`
+    <div class="tbd-link-input-row">
+      <input class="tbd-link-label" placeholder="Label (e.g. 1H Entry)" value="${esc(l.label)}"
+        oninput="tbdLinks[${i}].label=this.value">
+      <input placeholder="https://www.tradingview.com/…" value="${esc(l.url)}"
+        oninput="tbdLinks[${i}].url=this.value" style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
+      <button class="exp-btn-del" onclick="removeTbdLink(${i})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+async function saveTbd(){
+  const date=document.getElementById('tbd-date').value;
+  const asset=document.getElementById('tbd-asset').value.trim().toUpperCase();
+  const session=document.getElementById('tbd-session').value;
+  const notes=document.getElementById('tbd-notes').value.trim();
+  const result=getTbdResult();
+  if(!asset){showToast('Enter an asset name','error');return;}
+  if(!date){showToast('Select a date','error');return;}
+  const validLinks=tbdLinks.filter(l=>l.url.trim());
+  const entry={
+    id:editingTbdId||uid(),
+    date,asset,session,notes,result,
+    links:validLinks,
+    createdAt:editingTbdId?(tradeBreakdowns.find(b=>b.id===editingTbdId)?.createdAt||new Date().toISOString()):new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+  if(editingTbdId){
+    const idx=tradeBreakdowns.findIndex(b=>b.id===editingTbdId);
+    if(idx!==-1)tradeBreakdowns[idx]=entry;
+  }else{
+    tradeBreakdowns.unshift(entry);
+  }
+  closeTbdForm();
+  renderTbd();
+  await saveData('Save trade breakdown');
+  showToast('✅ Breakdown saved!','success');
+}
+
+async function deleteTbd(id){
+  if(!confirm('Delete this breakdown?'))return;
+  tradeBreakdowns=tradeBreakdowns.filter(b=>b.id!==id);
+  renderTbd();
+  await saveData('Delete trade breakdown');
+  showToast('🗑 Breakdown deleted');
+}
+
+function setTbdFilter(val,btn){
+  currentTbdFilter=val;
+  document.querySelectorAll('#tab-tradebreakdown .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTbd();
+}
+
+function renderTbd(){
+  const el=document.getElementById('tbd-list');
+  if(!el)return;
+  const filtered=tradeBreakdowns.filter(b=>currentTbdFilter==='all'||b.result===currentTbdFilter);
+  if(!filtered.length){
+    el.innerHTML=`<div class="tbd-empty"><div class="icon">🔍</div><h3>No breakdowns yet</h3><p>Click <strong>Add Breakdown</strong> to log your first trade analysis with chart links.</p></div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(b=>{
+    const resClass=b.result==='W'?'':b.result==='L'?'loss':'be';
+    const links=b.links||[];
+    return`<div class="tbd-card ${resClass}">
+      <div class="tbd-card-top">
+        <div class="tbd-asset">${esc(b.asset)}</div>
+        <div class="tbd-date">📅 ${fmtDate(b.date)}</div>
+        <span class="tbd-result-tag ${b.result}">${b.result==='W'?'WIN':b.result==='L'?'LOSS':'BE'}</span>
+        ${b.session?`<span class="tbd-session-tag">🕐 ${esc(b.session)}</span>`:''}
+        <div class="tbd-actions">
+          <button class="exp-btn-del" onclick="openTbdForm('${b.id}')" title="Edit">✏</button>
+          <button class="exp-btn-del" onclick="deleteTbd('${b.id}')" title="Delete">🗑</button>
+        </div>
+      </div>
+      ${links.length?`<div class="tbd-links">
+        ${links.map((l,i)=>`<a class="tbd-link-pill" href="${esc(l.url)}" target="_blank" rel="noopener">
+          📈 <span class="link-num">${esc(l.label)||'Chart '+(i+1)}</span>
+        </a>`).join('')}
+      </div>`:''}
+      ${b.notes?`<div class="tbd-notes-text">${esc(b.notes).replace(/\n/g,'<br>')}</div>`:''}
+      <div style="margin-top:8px;font-size:10px;color:var(--text3);font-family:var(--mono);">${b.updatedAt!==b.createdAt?'edited · ':''}${fmtDate(b.createdAt?.split('T')[0])}</div>
     </div>`;
   }).join('');
 }
