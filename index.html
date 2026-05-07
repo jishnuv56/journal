@@ -1719,7 +1719,6 @@ function openTbdForm(id){
     document.getElementById('tbd-session').value=b.session||'';
     document.getElementById('tbd-notes').value=b.notes||'';
     tbdLinks=b.links?[...b.links]:[];
-    setTbdResult(b.result||'W');
     titleEl.textContent='✏ Edit Breakdown';
   }else{
     document.getElementById('tbd-date').value=today;
@@ -1727,7 +1726,6 @@ function openTbdForm(id){
     document.getElementById('tbd-session').value='';
     document.getElementById('tbd-notes').value='';
     tbdLinks=[];
-    setTbdResult('W');
     titleEl.textContent='＋ New Breakdown';
   }
   renderTbdLinks();
