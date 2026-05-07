@@ -1328,6 +1328,8 @@ let evalTrades=[];
 let finances=[];
 let extraAccounts=[];
 let customChecklist=[];
+let notes=[];
+let tradeBreakdowns=[];
 let currentFilter='all', currentEvalFilter='all';
 let selectedTradeId=null, selectedEvalTradeId=null;
 let editingId=null, editingEvalId=null;
@@ -1481,12 +1483,10 @@ function switchTab(name){
 function renderAll(){renderStats();renderTrades('live');renderAccountFilters();renderEvalAccountFilters();renderFinances();renderNotes();renderTbd();}
 
 // ── NOTES ─────────────────────────────────────────────────
-let notes=[];
 let currentNoteFilter='all';
 let editingNoteId=null;
 
 // ── TRADE BREAKDOWNS STATE ────────────────────────────────
-let tradeBreakdowns=[];
 let currentTbdFilter='all';
 let editingTbdId=null;
 let tbdLinks=[];
