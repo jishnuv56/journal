@@ -1169,14 +1169,6 @@ select option{background:#111318;}
 
         <div class="form-row" style="margin-bottom:12px;">
           <div>
-            <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Result</label>
-            <div style="display:flex;">
-              <button class="result-btn W active" id="tbd-result-W" onclick="setTbdResult('W')">WIN</button>
-              <button class="result-btn L" id="tbd-result-L" onclick="setTbdResult('L')">LOSS</button>
-              <button class="result-btn BE" id="tbd-result-BE" onclick="setTbdResult('BE')">BE</button>
-            </div>
-          </div>
-          <div>
             <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:5px;">Session</label>
             <select id="tbd-session" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;">
               <option value="">— Select —</option>
@@ -1205,14 +1197,6 @@ select option{background:#111318;}
           <button class="btn-save" style="margin:0;" onclick="saveTbd()">💾 Save Breakdown</button>
           <button class="btn-edit" style="margin:0;flex:0 0 auto;width:auto;padding:8px 16px;" onclick="closeTbdForm()">Cancel</button>
         </div>
-      </div>
-
-      <!-- Filter bar -->
-      <div class="filters" style="margin-bottom:16px;">
-        <button class="filter-btn active" onclick="setTbdFilter('all',this)">All</button>
-        <button class="filter-btn" onclick="setTbdFilter('W',this)">✅ Wins</button>
-        <button class="filter-btn" onclick="setTbdFilter('L',this)">❌ Losses</button>
-        <button class="filter-btn" onclick="setTbdFilter('BE',this)">➖ Break Even</button>
       </div>
 
       <!-- Cards list -->
@@ -1757,17 +1741,6 @@ function closeTbdForm(){
   tbdLinks=[];
 }
 
-function setTbdResult(r){
-  ['W','L','BE'].forEach(v=>{
-    const btn=document.getElementById('tbd-result-'+v);
-    if(btn) btn.className='result-btn '+v+(r===v?' active':'');
-  });
-}
-
-function getTbdResult(){
-  return ['W','L','BE'].find(v=>document.getElementById('tbd-result-'+v)?.classList.contains('active'))||'W';
-}
-
 function addTbdLink(){
   tbdLinks.push({label:'',url:''});
   renderTbdLinks();
@@ -1800,13 +1773,12 @@ async function saveTbd(){
   const asset=document.getElementById('tbd-asset').value.trim().toUpperCase();
   const session=document.getElementById('tbd-session').value;
   const notes=document.getElementById('tbd-notes').value.trim();
-  const result=getTbdResult();
   if(!asset){showToast('Enter an asset name','error');return;}
   if(!date){showToast('Select a date','error');return;}
   const validLinks=tbdLinks.filter(l=>l.url.trim());
   const entry={
     id:editingTbdId||uid(),
-    date,asset,session,notes,result,
+    date,asset,session,notes,
     links:validLinks,
     createdAt:editingTbdId?(tradeBreakdowns.find(b=>b.id===editingTbdId)?.createdAt||new Date().toISOString()):new Date().toISOString(),
     updatedAt:new Date().toISOString()
@@ -1831,29 +1803,20 @@ async function deleteTbd(id){
   showToast('🗑 Breakdown deleted');
 }
 
-function setTbdFilter(val,btn){
-  currentTbdFilter=val;
-  document.querySelectorAll('#tab-tradebreakdown .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTbd();
-}
-
 function renderTbd(){
   const el=document.getElementById('tbd-list');
   if(!el)return;
-  const filtered=tradeBreakdowns.filter(b=>currentTbdFilter==='all'||b.result===currentTbdFilter);
+  const filtered=tradeBreakdowns;
   if(!filtered.length){
     el.innerHTML=`<div class="tbd-empty"><div class="icon">🔍</div><h3>No breakdowns yet</h3><p>Click <strong>Add Breakdown</strong> to log your first trade analysis with chart links.</p></div>`;
     return;
   }
   el.innerHTML=filtered.map(b=>{
-    const resClass=b.result==='W'?'':b.result==='L'?'loss':'be';
     const links=b.links||[];
-    return`<div class="tbd-card ${resClass}">
+    return`<div class="tbd-card">
       <div class="tbd-card-top">
         <div class="tbd-asset">${esc(b.asset)}</div>
         <div class="tbd-date">📅 ${fmtDate(b.date)}</div>
-        <span class="tbd-result-tag ${b.result}">${b.result==='W'?'WIN':b.result==='L'?'LOSS':'BE'}</span>
         ${b.session?`<span class="tbd-session-tag">🕐 ${esc(b.session)}</span>`:''}
         <div class="tbd-actions">
           <button class="exp-btn-del" onclick="openTbdForm('${b.id}')" title="Edit">✏</button>
