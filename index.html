@@ -3784,8 +3784,14 @@ function getCheckedItems(mode){
   const box = document.getElementById(p+'-checklist');
   if(!box) return [];
   const checked = [];
-  box.querySelectorAll('input[type=checkbox]:checked').forEach((cb,i)=>{
-    if(customChecklist[i]) checked.push(customChecklist[i]);
+  // Use the checkbox id to get the correct index, not the forEach index
+  // e.g. id="f-chk-2" → index 2 → customChecklist[2]
+  box.querySelectorAll('input[type=checkbox]:checked').forEach(cb=>{
+    const match = cb.id.match(/-chk-(\d+)$/);
+    if(match){
+      const idx = parseInt(match[1]);
+      if(customChecklist[idx]) checked.push(customChecklist[idx]);
+    }
   });
   return checked;
 }
